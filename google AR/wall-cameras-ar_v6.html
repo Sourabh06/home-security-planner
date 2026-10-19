@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wall Cameras AR</title>
+<style>
+  :root {
+    --bg: #101418; --panel: rgba(16,20,24,.86); --ink: #eef2f5; --muted: #93a1ad;
+    --accent: #3fd0c9; --danger: #ff6b5e; --line: rgba(255,255,255,.14);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; }
+  #start { height: 100%; display: flex; flex-direction: column; justify-content: center;
+    padding: 28px; max-width: 520px; margin: 0 auto; gap: 16px; }
+  #start h1 { font-size: 2rem; line-height: 1.15; margin: 0; letter-spacing: -.01em; }
+  #start p { margin: 0; color: var(--muted); line-height: 1.5; }
+  #startBtn { padding: 16px; font-size: 1.05rem; font-weight: 700; border: 0; border-radius: 10px;
+    background: var(--accent); color: #05201f; }
+  #startBtn[disabled] { background: #2a343c; color: var(--muted); }
+  #msg { color: var(--danger); min-height: 1.4em; font-size: .92rem; }
+  canvas { display: block; }
+  html.ar, html.ar body { background: transparent; }
+  #startBtn2 { padding: 12px; font-size: .95rem; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); }
+  #startBtn2[disabled] { opacity: .4; }
+
+  #overlay { visibility: hidden; position: fixed; inset: 0; pointer-events: none; }
+  #status { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); left: 12px; right: 12px;
+    display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
+  .chip { background: var(--panel); padding: 8px 12px; border-radius: 999px; font-size: .85rem;
+    border: 1px solid var(--line); }
+  #panel { position: absolute; left: 0; right: 0; bottom: 0; pointer-events: auto;
+    background: var(--panel); border-top: 1px solid var(--line);
+    padding: 12px 14px calc(env(safe-area-inset-bottom, 0px) + 12px); max-height: 52vh; overflow-y: auto; }
+  #panel h2 { margin: 0 0 8px; font-size: .95rem; font-weight: 700; }
+  .row { display: grid; grid-template-columns: 74px 1fr 52px; align-items: center; gap: 8px; margin: 6px 0; font-size: .85rem; }
+  .row output { text-align: right; color: var(--muted); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  input[type=color] { width: 100%; height: 30px; border: 0; background: none; padding: 0; grid-column: 2 / 4; }
+  .btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btns button { flex: 1 1 0; min-width: 70px; padding: 11px 6px; border-radius: 8px; border: 1px solid var(--line);
+    background: #1b232a; color: var(--ink); font-size: .85rem; font-weight: 600; }
+  .btns button.on { background: var(--accent); color: #05201f; }
+  .btns button.warn { color: var(--danger); }
+  .btns button:disabled { opacity: .4; }
+  .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .head h2 { margin: 0; }
+  #foldBtn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: #1b232a; color: var(--ink); font-size: .8rem; }
+  #panel.folded #panelBody { display: none; }
+  .btns.top { margin: 0 0 8px; }
+  input[type=range]:disabled { opacity: .35; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div id="start">
+  <h1>Wall cameras in AR</h1>
+  <p>Point your phone at a wall and tap to mount a camera. The translucent beam shows the area each camera can see. Adjust the view angle, range and color per camera.</p>
+  <button id="startBtn" disabled>Checking AR support…</button>
+  <button id="startBtn2" disabled>Start AR without the panel (test)</button>
+  <div id="msg" role="status"></div>
+  <p>Needs Android Chrome with Google Play Services for AR, served over HTTPS.</p>
+</div>
+
+<div id="overlay">
+  <div id="status">
+    <span class="chip" id="hint">Move the phone to scan a surface</span>
+    <span class="chip" id="count">0 cameras</span>
+  </div>
+  <div id="panel">
+    <div class="head"><h2 id="panelTitle">Settings for the next camera</h2><button id="foldBtn">Hide</button></div>
+    <div id="panelBody">
+      <div class="btns top">
+        <button id="lockBtn">Lock wall</button>
+        <button id="moveBtn" disabled>Move</button>
+        <button id="delBtn" class="warn" disabled>Remove</button>
+        <button id="clearBtn" class="warn">Remove all</button>
+        <button id="exitBtn">Exit</button>
+      </div>
+      <div class="row"><label for="pan">Pan</label><input id="pan" type="range" min="-90" max="90" step="1" value="0" disabled><output id="panO"></output></div>
+      <div class="row"><label for="tilt">Tilt</label><input id="tilt" type="range" min="-60" max="60" step="1" value="0" disabled><output id="tiltO"></output></div>
+      <div class="row"><label for="fov">View angle</label><input id="fov" type="range" min="20" max="120" step="1" value="70"><output id="fovO"></output></div>
+      <div class="row"><label for="range">Range</label><input id="range" type="range" min="0.5" max="8" step="0.1" value="3"><output id="rangeO"></output></div>
+      <div class="row"><label for="opac">Opacity</label><input id="opac" type="range" min="0.05" max="0.8" step="0.01" value="0.3"><output id="opacO"></output></div>
+      <div class="row"><label for="color">Color</label><input id="color" type="color" value="#3fd0c9"></div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const $ = id => document.getElementById(id);
+const startBtn = $('startBtn'), overlay = $('overlay');
+
+// ---------- Scene ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local'); // phones often lack 'local-floor'
+document.body.appendChild(renderer.domElement);
+renderer.domElement.style.display = 'none';
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+sun.position.set(1, 2, 1);
+scene.add(sun);
+
+// ---------- Reticle ----------
+const reticle = new THREE.Group();
+reticle.matrixAutoUpdate = false;
+reticle.visible = false;
+const ringMat = new THREE.MeshBasicMaterial({ color: 0x3fd0c9, side: THREE.DoubleSide });
+reticle.add(new THREE.Mesh(new THREE.RingGeometry(0.07, 0.09, 40).rotateX(-Math.PI / 2), ringMat));
+reticle.add(new THREE.Mesh(new THREE.CircleGeometry(0.012, 16).rotateX(-Math.PI / 2), ringMat));
+scene.add(reticle);
+
+// ---------- Beam (view frustum) ----------
+const ASPECT = 16 / 9;
+
+function makeBeam(color, opacity) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(15), 3));
+  geo.setIndex([0,1,2, 0,2,3, 0,3,4, 0,4,1, 1,2,3, 1,3,4]);
+  const mat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    uniforms: { uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity }, uRange: { value: 1 } },
+    vertexShader: `varying float vT; uniform float uRange;
+      void main(){ vT = clamp(position.z / uRange, 0.0, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `varying float vT; uniform vec3 uColor; uniform float uOpacity;
+      void main(){ gl_FragColor = vec4(uColor, uOpacity * mix(1.0, 0.3, vT)); }`
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 2;
+
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute('position', geo.getAttribute('position'));
+  lineGeo.setIndex([0,1, 0,2, 0,3, 0,4, 1,2, 2,3, 3,4, 4,1]);
+  const lines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.85, depthWrite: false }));
+  lines.frustumCulled = false;
+  lines.renderOrder = 3;
+  mesh.add(lines);
+  return mesh;
+}
+
+function updateBeam(f) {
+  const { fov, range, opacity, color } = f.userData;
+  const w = Math.tan(THREE.MathUtils.degToRad(fov) / 2) * range, h = w / ASPECT;
+  const p = f.userData.beam.geometry.getAttribute('position');
+  p.set([0,0,0,  -w,-h,range,  w,-h,range,  w,h,range,  -w,h,range]);
+  p.needsUpdate = true;
+  const m = f.userData.beam.material;
+  m.uniforms.uRange.value = range;
+  m.uniforms.uOpacity.value = opacity;
+  m.uniforms.uColor.value.set(color);
+  f.userData.beam.children[0].material.color.set(color);
+}
+
+// ---------- Camera fixture (+Z is the viewing direction) ----------
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdfe5ea, roughness: 0.5, metalness: 0.2 });
+const darkMat = new THREE.MeshStandardMaterial({ color: 0x20262c, roughness: 0.4, metalness: 0.4 });
+const glassMat = new THREE.MeshStandardMaterial({ color: 0x0a1a2a, emissive: 0x112a44, roughness: 0.1 });
+const ledMat = new THREE.MeshBasicMaterial({ color: 0xff3b30 });
+const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+const WALL_OFFSET = 0.2;
+const PIVOT = new THREE.Vector3(0, 0, -0.1), _e = new THREE.Euler(), _v = new THREE.Vector3();
+const irMat = new THREE.MeshStandardMaterial({ color: 0x2a0505, emissive: 0xaa1111, roughness: 0.6 });
+
+function applyAim(f) {
+  const { head, yaw, pitch } = f.userData;
+  _e.set(THREE.MathUtils.degToRad(-pitch), THREE.MathUtils.degToRad(yaw), 0, 'YXZ');
+  head.quaternion.setFromEuler(_e);
+  head.position.copy(PIVOT).sub(_v.copy(PIVOT).applyQuaternion(head.quaternion));  // swing about the bracket joint
+}
+
+// Origin = lens front, +Z = viewing direction. Bracket is fixed to the wall; the head pans and tilts at the joint.
+function makeFixture(params) {
+  const g = new THREE.Group();
+  const head = new THREE.Group();
+  const body = new THREE.Group();
+  const put = (parent, geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+
+  // fixed wall bracket
+  put(g, new THREE.BoxGeometry(0.09, 0.09, 0.012), darkMat, 0, 0, -0.194);
+  put(g, new THREE.CylinderGeometry(0.012, 0.012, 0.1, 12).rotateX(Math.PI / 2), darkMat, 0, 0, -0.145);
+  put(g, new THREE.SphereGeometry(0.022, 14, 10), darkMat, 0, 0, -0.1);
+
+  // movable head: bullet body, sun visor, lens, IR ring, LED
+  put(body, new THREE.CylinderGeometry(0.034, 0.034, 0.17, 20).rotateX(Math.PI / 2), bodyMat, 0, 0, -0.085);
+  put(body, new THREE.BoxGeometry(0.085, 0.006, 0.17), bodyMat, 0, 0.04, -0.07);
+  put(body, new THREE.CylinderGeometry(0.036, 0.036, 0.012, 20).rotateX(Math.PI / 2), darkMat, 0, 0, -0.006);
+  put(body, new THREE.CircleGeometry(0.02, 20), glassMat, 0, 0, 0.0005);
+  put(body, new THREE.RingGeometry(0.023, 0.031, 20), irMat, 0, 0, 0.0008);
+  put(body, new THREE.SphereGeometry(0.005, 10, 8), ledMat, 0.02, 0.03, -0.03);
+  put(body, new THREE.BoxGeometry(0.3, 0.3, 0.34), hitMat, 0, 0, -0.1);            // generous tap target
+  head.add(body);
+
+  const sel = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.5 }));
+  sel.position.z = -0.1; sel.visible = false;
+  head.add(sel);
+
+  const beam = makeBeam(params.color, params.opacity);
+  head.add(beam);
+  g.add(head);
+  g.userData = { isFixture: true, head, body, sel, beam, yaw: 0, pitch: -15, ...params };
+  updateBeam(g);
+  applyAim(g);
+  return g;
+}
+
+// ---------- State ----------
+const fixtures = [];
+let selected = null, moving = false;
+const defaults = { fov: 70, range: 3, opacity: 0.3, color: '#3fd0c9' };
+
+const ui = { pan: $('pan'), tilt: $('tilt'), panO: $('panO'), tiltO: $('tiltO'), fold: $('foldBtn'), fov: $('fov'), range: $('range'), opac: $('opac'), color: $('color'),
+  fovO: $('fovO'), rangeO: $('rangeO'), opacO: $('opacO'),
+  move: $('moveBtn'), del: $('delBtn'), title: $('panelTitle'), hint: $('hint'), count: $('count') };
+
+function syncUI() {
+  const s = selected ? selected.userData : defaults;
+  ui.fov.value = s.fov; ui.range.value = s.range; ui.opac.value = s.opacity; ui.color.value = s.color;
+  ui.fovO.textContent = Math.round(s.fov) + '°';
+  ui.rangeO.textContent = Number(s.range).toFixed(1) + ' m';
+  ui.opacO.textContent = Math.round(s.opacity * 100) + '%';
+  const u = selected ? selected.userData : { yaw: 0, pitch: 0 };
+  ui.pan.value = u.yaw; ui.tilt.value = u.pitch;
+  ui.panO.textContent = Math.round(u.yaw) + '°'; ui.tiltO.textContent = Math.round(u.pitch) + '°';
+  ui.pan.disabled = ui.tilt.disabled = !selected;
+  ui.title.textContent = selected ? 'Selected camera' : 'Settings for the next camera';
+  ui.move.disabled = ui.del.disabled = !selected;
+  ui.move.classList.toggle('on', moving);
+  ui.move.textContent = moving ? 'Drop' : 'Move';
+  ui.count.textContent = fixtures.length + (fixtures.length === 1 ? ' camera' : ' cameras');
+}
+
+function select(f) {
+  if (selected) selected.userData.sel.visible = false;
+  selected = f; moving = false;
+  if (f) f.userData.sel.visible = true;
+  syncUI();
+}
+
+function onParam() {
+  const v = { fov: +ui.fov.value, range: +ui.range.value, opacity: +ui.opac.value, color: ui.color.value };
+  Object.assign(defaults, v);
+  if (selected) { Object.assign(selected.userData, v); updateBeam(selected); }
+  syncUI();
+}
+['fov', 'range', 'opac', 'color'].forEach(k => ui[k].addEventListener('input', onParam));
+
+// Keep taps on the panel from reaching the AR scene
+['panel', 'status'].forEach(id => $(id).addEventListener('beforexrselect', e => e.preventDefault()));
+
+['pan', 'tilt'].forEach(k => ui[k].addEventListener('input', () => {
+  if (!selected) return;
+  selected.userData.yaw = +ui.pan.value; selected.userData.pitch = +ui.tilt.value;
+  applyAim(selected); syncUI();
+}));
+ui.fold.addEventListener('click', () => {
+  const f = $('panel').classList.toggle('folded');
+  ui.fold.textContent = f ? 'Show' : 'Hide';
+});
+
+ui.move.addEventListener('click', () => { if (selected) { moving = !moving; syncUI(); } });
+ui.del.addEventListener('click', () => {
+  if (!selected) return;
+  scene.remove(selected);
+  fixtures.splice(fixtures.indexOf(selected), 1);
+  selected = null; moving = false; syncUI();
+});
+$('clearBtn').addEventListener('click', () => {
+  fixtures.forEach(f => scene.remove(f)); fixtures.length = 0; selected = null; moving = false; syncUI();
+});
+$('exitBtn').addEventListener('click', () => renderer.xr.getSession()?.end());
+
+// ---------- Placement ----------
+const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _n = new THREE.Vector3();
+const _x = new THREE.Vector3(), _y = new THREE.Vector3(), _m = new THREE.Matrix4();
+const WORLD_UP = new THREE.Vector3(0, 1, 0), ALT_UP = new THREE.Vector3(0, 0, -1);
+
+function readReticle() {
+  reticle.matrix.decompose(_p, _q, _s);
+  _n.set(0, 1, 0).applyQuaternion(_q).normalize();   // hit pose Y axis = surface normal
+}
+
+function poseFixture(f) {
+  f.position.copy(_p).addScaledVector(_n, WALL_OFFSET);
+  const up = Math.abs(_n.y) > 0.9 ? ALT_UP : WORLD_UP;
+  _x.crossVectors(up, _n).normalize();
+  _y.crossVectors(_n, _x);
+  f.quaternion.setFromRotationMatrix(_m.makeBasis(_x, _y, _n));
+}
+
+// ---------- Wall lock (virtual wall plane for high or untextured walls) ----------
+const wallLock = { on: false, n: new THREE.Vector3(), p: new THREE.Vector3() };
+const _plane = new THREE.Plane(), _ray = new THREE.Ray(), _o = new THREE.Vector3(), _d = new THREE.Vector3(),
+  _ln = new THREE.Vector3(), _hit = new THREE.Vector3(), _xa = new THREE.Vector3(), _za = new THREE.Vector3();
+let lastHitWall = false;
+
+function lockUI() {
+  $('lockBtn').textContent = wallLock.on ? 'Unlock wall' : 'Lock wall';
+  $('lockBtn').classList.toggle('on', wallLock.on);
+}
+$('lockBtn').addEventListener('click', () => {
+  if (wallLock.on) { wallLock.on = false; lockUI(); return; }
+  if (!reticle.visible || !lastHitWall) { ui.hint.textContent = 'Aim at a wall first, then tap Lock wall'; return; }
+  readReticle();
+  wallLock.n.copy(_n).setY(0).normalize();     // treat the wall as perfectly vertical
+  wallLock.p.copy(_p);
+  wallLock.on = true; moving = false; lockUI(); syncUI();
+});
+
+function lockedReticle() {
+  const cam = renderer.xr.getCamera();
+  cam.getWorldPosition(_o); cam.getWorldDirection(_d);
+  _ln.copy(wallLock.n); if (_ln.dot(_d) > 0) _ln.negate();       // face the viewer
+  _plane.setFromNormalAndCoplanarPoint(_ln, wallLock.p);
+  if (!_ray.set(_o, _d).intersectPlane(_plane, _hit) || _hit.distanceTo(_o) > 25) return false;
+  _xa.crossVectors(WORLD_UP, _ln).normalize();
+  _za.crossVectors(_xa, _ln);
+  reticle.matrix.makeBasis(_xa, _ln, _za).setPosition(_hit);
+  return true;
+}
+
+// ---------- Taps ----------
+const controller = renderer.xr.getController(0);
+scene.add(controller);
+const raycaster = new THREE.Raycaster(), _rm = new THREE.Matrix4();
+
+controller.addEventListener('select', () => {
+  _rm.identity().extractRotation(controller.matrixWorld);
+  raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+  raycaster.ray.direction.set(0, 0, -1).applyMatrix4(_rm);
+
+  if (moving && selected) { moving = false; syncUI(); return; }   // tap drops the moved camera
+
+  const hits = raycaster.intersectObjects(fixtures.map(f => f.userData.body), true);
+  if (hits.length) {
+    let o = hits[0].object;
+    while (o && !o.userData.isFixture) o = o.parent;
+    select(o === selected ? null : o);
+    return;
+  }
+  if (!reticle.visible) return;
+  readReticle();
+  const f = makeFixture({ ...defaults });
+  poseFixture(f);
+  scene.add(f); fixtures.push(f);
+  select(f);
+});
+
+// ---------- XR session ----------
+let hitSource = null;
+
+async function startAR(useOverlay = true) {
+  $('msg').textContent = '';
+  let session;
+  try {
+    const init = { optionalFeatures: ['hit-test'] };
+    if (useOverlay) { init.optionalFeatures.push('dom-overlay'); init.domOverlay = { root: document.body }; }
+    session = await navigator.xr.requestSession('immersive-ar', init);
+  } catch (e) {
+    $('msg').textContent = 'AR failed (' + (useOverlay ? 'with panel' : 'no panel') + '): ' + e.name + ': ' + e.message;
+    return;
+  }
+  const restore = () => {
+    hitSource = null; reticle.visible = false; wallLock.on = false; lockUI();
+    document.documentElement.classList.remove('ar');
+    overlay.style.visibility = 'hidden';
+    renderer.domElement.style.display = 'none';
+    $('start').style.display = 'flex';
+  };
+  session.addEventListener('end', restore);
+  try {
+    document.documentElement.classList.add('ar');
+    $('start').style.display = 'none';
+    renderer.domElement.style.display = 'block';
+    await renderer.xr.setSession(session);
+    overlay.style.visibility = 'visible';
+    const granted = session.enabledFeatures || [];
+    if (granted.includes('hit-test') || !session.enabledFeatures) {
+      const viewer = await session.requestReferenceSpace('viewer');
+      try { hitSource = await session.requestHitTestSource({ space: viewer, entityTypes: ['plane', 'point'] }); }
+      catch (err) { hitSource = await session.requestHitTestSource({ space: viewer }); }
+      ui.hint.textContent = 'Move the phone to scan a surface';
+    } else {
+      ui.hint.textContent = 'Surface detection is not available on this device';
+    }
+    if (!granted.includes('dom-overlay')) ui.hint.textContent += ' (panel unavailable)';
+    syncUI();
+  } catch (e) {
+    restore();
+    $('msg').textContent = 'Setup failed: ' + e.name + ': ' + e.message;
+    session.end().catch(() => {});
+  }
+}
+
+let loopError = false;
+function frameLoop(t, frame) {
+  let have = false, wall = false;
+  if (wallLock.on) {
+    have = lockedReticle(); wall = true;
+  } else if (frame && hitSource) {
+    const res = frame.getHitTestResults(hitSource);
+    if (res.length) {
+      const pose = res[0].getPose(renderer.xr.getReferenceSpace());
+      reticle.matrix.fromArray(pose.transform.matrix);
+      have = true;
+      readReticle();
+      wall = Math.abs(_n.y) < 0.35;
+    }
+  }
+  reticle.visible = have;
+  lastHitWall = have && wall;
+  if (have) {
+    ringMat.color.set(wallLock.on ? 0xffffff : (wall ? 0x3fd0c9 : 0xffb347));
+    readReticle();
+    ui.hint.textContent = moving ? 'Aim, then tap to drop'
+      : wallLock.on ? 'Wall locked: aim anywhere on it and tap'
+      : wall ? 'Wall found: tap to mount, or Lock wall' : 'Floor or ceiling: tap to mount anyway';
+    if (moving && selected) poseFixture(selected);
+  } else {
+    ui.hint.textContent = wallLock.on ? 'Aim toward the locked wall' : 'Move the phone slowly to scan surfaces';
+  }
+  renderer.render(scene, camera);
+}
+renderer.setAnimationLoop((t, frame) => {
+  try { frameLoop(t, frame); }
+  catch (e) {
+    if (!loopError) {
+      loopError = true;
+      renderer.setAnimationLoop(null);
+      const sess = renderer.xr.getSession();
+      $('msg').textContent = 'Render error: ' + e.name + ': ' + e.message;
+      if (sess) sess.end().catch(() => {});
+    }
+  }
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ---------- Support check ----------
+(async () => {
+  if (!window.isSecureContext) { startBtn.textContent = 'HTTPS required'; $('msg').textContent = 'Open this page over HTTPS.'; return; }
+  if (!navigator.xr) { startBtn.textContent = 'WebXR not available'; $('msg').textContent = 'Use Chrome on an ARCore-supported Android phone.'; return; }
+  const ok = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+  if (!ok) { startBtn.textContent = 'AR not supported'; $('msg').textContent = 'Install or update Google Play Services for AR, then reload.'; return; }
+  startBtn.disabled = false;
+  startBtn.textContent = 'Start AR';
+  startBtn.addEventListener('click', () => startAR(true));
+  $('startBtn2').disabled = false;
+  $('startBtn2').addEventListener('click', () => startAR(false));
+  syncUI();
+})();
+</script>
+</body>
+</html>
