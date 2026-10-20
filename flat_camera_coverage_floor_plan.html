@@ -212,6 +212,12 @@ input[type=range]::-moz-range-thumb{
     <button type="button" id="btnClear" disabled>Clear all</button>
     <button type="button" id="btnFit">Reset view</button>
   </div>
+  <div class="actions" style="grid-template-columns:repeat(2,1fr)">
+    <button type="button" id="btnSave">Save plan</button>
+    <button type="button" id="btnLoad">Load plan</button>
+  </div>
+  <input type="file" id="fileIn" accept=".json,application/json" hidden>
+  <p class="hint" id="status" aria-live="polite" style="min-height:0;color:var(--accent)"></p>
   <p class="hint" id="hint" aria-live="polite"></p>
   <div id="textbar" hidden>
     <input type="text" id="textInput" maxlength="40" placeholder="Type a label" autocomplete="off" aria-label="Label text">
@@ -358,6 +364,7 @@ function updButtons(){
   $('btnUndo').disabled=!undoS.length;
   $('btnRedo').disabled=!redoS.length;
   $('btnClear').disabled=!(st.lines.length||st.texts.length||st.cams.length);
+  schedulePersist();
 }
 
 function applyView(){
@@ -616,7 +623,110 @@ $('textCancel').onclick=cancelPending;
 $('textInput').addEventListener('keydown',function(e){
   if(e.key==='Enter'){e.preventDefault();commitText();}
 });
-$('showCones').addEventListener('change',renderCustom);
+$('showCones').addEventListener('change',function(){renderCustom();schedulePersist();});
+
+/* ================= SAVE / LOAD ================= */
+var KEY='flatCameraPlan.v1',saveTimer=null,statusTimer=null;
+function say(msg){
+  var s=$('status');s.textContent=msg;
+  clearTimeout(statusTimer);
+  statusTimer=setTimeout(function(){s.textContent='';},4000);
+}
+function num(v,lo,hi,def){
+  v=Number(v);
+  return isFinite(v)?clamp(v,lo,hi):def;
+}
+function sanitize(d){
+  if(!d||typeof d!=='object')return null;
+  var out={lines:[],texts:[],cams:[]};
+  (Array.isArray(d.lines)?d.lines:[]).slice(0,2000).forEach(function(l){
+    if(!l)return;
+    out.lines.push({x1:num(l.x1,0,W,0),y1:num(l.y1,0,H,0),x2:num(l.x2,0,W,0),y2:num(l.y2,0,H,0)});
+  });
+  (Array.isArray(d.texts)?d.texts:[]).slice(0,500).forEach(function(t){
+    if(!t||typeof t.t!=='string')return;
+    var s=t.t.trim().slice(0,40);
+    if(s)out.texts.push({x:num(t.x,0,W,0),y:num(t.y,0,H,0),t:s});
+  });
+  (Array.isArray(d.cams)?d.cams:[]).slice(0,200).forEach(function(c){
+    if(!c)return;
+    out.cams.push({t:c.t==='out'?'out':'in',x:num(c.x,0,W,0),y:num(c.y,0,H,0),a:num(c.a,-360,360,90)});
+  });
+  var sv=d.settings||{};
+  out.settings={
+    showCones:sv.showCones===true,
+    fov:num(sv.fov,60,130,100),
+    rng:num(sv.rng,60,160,100)
+  };
+  return out;
+}
+function snapshotData(){
+  return {
+    app:'flat-camera-coverage',version:1,
+    lines:st.lines,texts:st.texts,cams:st.cams,
+    settings:{showCones:$('showCones').checked,fov:fovVal(),rng:+$('rng').value}
+  };
+}
+function applyData(d){
+  st={lines:d.lines,texts:d.texts,cams:d.cams};
+  $('showCones').checked=d.settings.showCones;
+  $('fov').value=d.settings.fov;
+  $('rng').value=d.settings.rng;
+  cancelPending();
+  onSlide();updButtons();
+}
+function persist(){
+  try{localStorage.setItem(KEY,JSON.stringify(snapshotData()));}catch(_){}
+}
+function schedulePersist(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(persist,200);
+}
+function restore(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(!raw)return;
+    var d=sanitize(JSON.parse(raw));
+    if(d)applyData(d);
+  }catch(_){}
+}
+window.addEventListener('pagehide',persist);
+document.addEventListener('visibilitychange',function(){if(document.hidden)persist();});
+
+$('btnSave').onclick=function(){
+  try{
+    var blob=new Blob([JSON.stringify(snapshotData(),null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    var d=new Date(),p=function(n){return (n<10?'0':'')+n;};
+    a.href=url;
+    a.download='my-floor-plan-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    say('Plan saved to your Downloads.');
+  }catch(_){say('Could not save the file.');}
+};
+$('btnLoad').onclick=function(){$('fileIn').value='';$('fileIn').click();};
+$('fileIn').addEventListener('change',function(){
+  var f=this.files&&this.files[0];
+  if(!f)return;
+  if(f.size>2*1024*1024){say('That file is too large to be a plan.');return;}
+  var rd=new FileReader();
+  rd.onerror=function(){say('Could not read that file.');};
+  rd.onload=function(){
+    var d=null,raw=null;
+    try{raw=JSON.parse(rd.result);d=sanitize(raw);}catch(_){}
+    if(!d||!(Array.isArray(raw.lines)||Array.isArray(raw.texts)||Array.isArray(raw.cams))){
+      say('That file is not a valid plan.');return;
+    }
+    var has=st.lines.length||st.texts.length||st.cams.length;
+    if(has&&!window.confirm('Replace your current plan with this file? You can still tap Undo afterwards.'))return;
+    pushUndo();
+    applyData(d);
+    say('Plan loaded.');
+  };
+  rd.readAsText(f);
+});
 
 /* ================= SWITCH & SHARED ================= */
 function showView(custom){
@@ -641,6 +751,7 @@ function onSlide(){
   $('rngo').textContent=Math.round(rngScale()*100)+'%';
   drawExample();
   if(!$('viewCustom').hidden)renderCustom();
+  schedulePersist();
 }
 $('fov').addEventListener('input',onSlide);
 $('rng').addEventListener('input',onSlide);
@@ -650,6 +761,7 @@ window.addEventListener('resize',function(){
 });
 
 buildExample();
+restore();
 onSlide();
 setHint();
 updButtons();
