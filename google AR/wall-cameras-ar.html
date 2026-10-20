@@ -22,8 +22,6 @@
   #msg { color: var(--danger); min-height: 1.4em; font-size: .92rem; }
   canvas { display: block; }
   html.ar, html.ar body { background: transparent; }
-  #startBtn2 { padding: 12px; font-size: .95rem; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); }
-  #startBtn2[disabled] { opacity: .4; }
 
   #overlay { visibility: hidden; position: fixed; inset: 0; pointer-events: none; }
   #status { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); left: 12px; right: 12px;
@@ -59,7 +57,6 @@
   <h1>Wall cameras in AR</h1>
   <p>Point your phone at a wall and tap to mount a camera. The translucent beam shows the area each camera can see. Adjust the view angle, range and color per camera.</p>
   <button id="startBtn" disabled>Checking AR support…</button>
-  <button id="startBtn2" disabled>Start AR without the panel (test)</button>
   <div id="msg" role="status"></div>
   <p>Needs Android Chrome with Google Play Services for AR, served over HTTPS.</p>
 </div>
@@ -363,15 +360,16 @@ controller.addEventListener('select', () => {
 // ---------- XR session ----------
 let hitSource = null;
 
-async function startAR(useOverlay = true) {
+async function startAR() {
   $('msg').textContent = '';
   let session;
   try {
-    const init = { optionalFeatures: ['hit-test'] };
-    if (useOverlay) { init.optionalFeatures.push('dom-overlay'); init.domOverlay = { root: document.body }; }
-    session = await navigator.xr.requestSession('immersive-ar', init);
+    session = await navigator.xr.requestSession('immersive-ar', {
+      optionalFeatures: ['hit-test', 'dom-overlay'],
+      domOverlay: { root: document.body }
+    });
   } catch (e) {
-    $('msg').textContent = 'AR failed (' + (useOverlay ? 'with panel' : 'no panel') + '): ' + e.name + ': ' + e.message;
+    $('msg').textContent = 'AR failed: ' + e.name + ': ' + e.message;
     return;
   }
   const restore = () => {
@@ -462,9 +460,7 @@ window.addEventListener('resize', () => {
   if (!ok) { startBtn.textContent = 'AR not supported'; $('msg').textContent = 'Install or update Google Play Services for AR, then reload.'; return; }
   startBtn.disabled = false;
   startBtn.textContent = 'Start AR';
-  startBtn.addEventListener('click', () => startAR(true));
-  $('startBtn2').disabled = false;
-  $('startBtn2').addEventListener('click', () => startAR(false));
+  startBtn.addEventListener('click', startAR);
   syncUI();
 })();
 </script>
