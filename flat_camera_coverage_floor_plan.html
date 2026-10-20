@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Flat camera coverage floor plan</title>
+<style>
+:root{
+  --bg:#f9f9f7;
+  --surface-1:#fcfcfb;
+  --surface-2:#ffffff;
+  --text-primary:#0b0b0b;
+  --text-secondary:#52514e;
+  --text-muted:#898781;
+  --border:rgba(11,11,11,.10);
+  --border-strong:rgba(11,11,11,.20);
+  --accent:#2a78d6;
+  --accent-bg:rgba(42,120,214,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0b0b;
+    --surface-1:#1a1a19;
+    --surface-2:#242423;
+    --text-primary:#f0efec;
+    --text-secondary:#c3c2b7;
+    --text-muted:#898781;
+    --border:rgba(255,255,255,.12);
+    --border-strong:rgba(255,255,255,.25);
+    --accent:#6da7ec;
+    --accent-bg:rgba(109,167,236,.2);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text-primary);
+  padding:16px;
+  padding-left:max(16px,env(safe-area-inset-left));
+  padding-right:max(16px,env(safe-area-inset-right));
+  padding-bottom:max(16px,env(safe-area-inset-bottom));
+}
+main{max-width:900px;margin:0 auto}
+h1{font-size:1.25rem;font-weight:600;margin-bottom:12px;line-height:1.3}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Switch between example and own plan */
+.switch{
+  display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-bottom:12px;
+  background:var(--surface-1);border:1px solid var(--border-strong);border-radius:12px;
+}
+.switch button{
+  min-height:44px;border:0;border-radius:8px;background:transparent;
+  font-size:15px;font-weight:500;color:var(--text-secondary);cursor:pointer;
+}
+.switch button[aria-pressed="true"]{background:var(--accent);color:#fff}
+
+/* Example plan */
+#plan{display:block;width:100%;height:auto;max-width:100%}
+#plan .ts{font-size:12px;fill:var(--text-secondary)}
+#plan .th{font-size:14px;fill:var(--text-primary);font-weight:500}
+#plan .muted{fill:var(--text-muted)}
+
+#toggles{display:flex;flex-wrap:wrap;gap:4px 18px;margin:12px 0 4px;font-size:14px}
+.check{
+  display:flex;align-items:center;gap:8px;cursor:pointer;
+  min-height:44px;padding:4px 0;font-size:14px;
+}
+.check input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+
+.cta{
+  display:block;width:100%;min-height:48px;margin-top:12px;
+  border:0;border-radius:10px;background:var(--accent);color:#fff;
+  font-size:16px;font-weight:600;cursor:pointer;
+}
+
+/* Custom canvas */
+.tools,.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
+.tools button,.actions button{
+  min-height:44px;padding:4px 2px;border:1px solid var(--border-strong);border-radius:8px;
+  background:var(--surface-1);font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.tools button[aria-pressed="true"]{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:600}
+.actions button:disabled{opacity:.4;cursor:default}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;border:1px solid var(--text-primary)}
+.hint{font-size:13px;color:var(--text-secondary);min-height:2.6em;margin:2px 0 6px;line-height:1.3}
+#textbar{display:flex;gap:6px;margin-bottom:8px}
+#textbar input{
+  flex:1;min-width:0;height:44px;padding:8px 12px;font-size:16px;
+  background:var(--surface-2);color:var(--text-primary);
+  border:1px solid var(--border-strong);border-radius:8px;
+}
+#textbar button{min-height:44px;padding:0 14px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface-1);cursor:pointer}
+#textbar #textAdd{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+#canvas{
+  display:block;width:100%;height:62vh;height:62dvh;min-height:300px;max-height:640px;
+  background:var(--surface-1);border:1px solid var(--border-strong);border-radius:10px;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+  -webkit-touch-callout:none;
+}
+#canvas text{font-family:inherit}
+
+/* Shared controls */
+.sliders{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;
+  gap:8px 12px;margin:8px 0;font-size:14px;color:var(--text-secondary);
+}
+.sliders output{min-width:44px;text-align:right}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:44px;
+  background:transparent;touch-action:pan-y;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--border-strong)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--border-strong)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:26px;height:26px;border-radius:50%;
+  margin-top:-11px;background:var(--surface-2);border:1px solid var(--border-strong);
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
+}
+input[type=range]::-moz-range-thumb{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--surface-2);border:1px solid var(--border-strong);
+}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--text-secondary);margin-top:4px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+
+@media (max-width:640px){
+  body{padding:12px}
+  h1{font-size:1.1rem}
+  #plan .ts{font-size:17px}
+  #plan .th{font-size:17px}
+  .sliders{font-size:15px;gap:2px 10px}
+}
+@media (max-width:380px){
+  #plan .ts{font-size:19px}
+  #plan .th{font-size:19px}
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Flat camera coverage</h1>
+
+<div class="switch" role="group" aria-label="Choose plan">
+  <button type="button" id="swExample" aria-pressed="true">Example plan</button>
+  <button type="button" id="swCustom" aria-pressed="false">Your plan</button>
+</div>
+
+<!-- ============ EXAMPLE VIEW ============ -->
+<section id="viewExample">
+<svg viewBox="0 0 680 450" role="img" id="plan" aria-labelledby="plan-title plan-desc">
+<title id="plan-title">Flat floor plan with camera coverage</title>
+<desc id="plan-desc">Top-down plan with a living room, kitchen, bedroom, entry foyer, balcony and shared corridor. Cones show what each camera sees.</desc>
+<defs>
+<clipPath id="clipIn"><rect x="60" y="40" width="460" height="320"/></clipPath>
+<clipPath id="clipBal"><rect x="520" y="60" width="100" height="140"/></clipPath>
+<clipPath id="clipCor"><rect x="40" y="360" width="300" height="50"/></clipPath>
+</defs>
+
+<rect x="40" y="360" width="300" height="50" fill="var(--surface-1)" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4 3"/>
+<text class="ts" x="50" y="402">Shared corridor</text>
+<rect x="520" y="60" width="100" height="140" fill="var(--surface-1)" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4 3"/>
+<text class="ts" x="570" y="190" text-anchor="middle">Balcony</text>
+
+<rect x="60" y="40" width="280" height="210" fill="var(--surface-2)" stroke="var(--border-strong)" stroke-width="1.5"/>
+<rect x="340" y="40" width="180" height="160" fill="var(--surface-2)" stroke="var(--border-strong)" stroke-width="1.5"/>
+<rect x="340" y="200" width="180" height="160" fill="var(--surface-2)" stroke="var(--border-strong)" stroke-width="1.5"/>
+<rect x="60" y="250" width="280" height="110" fill="var(--surface-2)" stroke="var(--border-strong)" stroke-width="1.5"/>
+
+<text class="ts" x="200" y="150" text-anchor="middle">Living room</text>
+<text class="ts" x="430" y="120" text-anchor="middle">Kitchen</text>
+<text class="ts" x="430" y="275" text-anchor="middle">Bedroom</text>
+<text class="ts" x="430" y="297" text-anchor="middle">no camera, privacy</text>
+<text class="ts" x="250" y="340" text-anchor="middle">Entry foyer</text>
+
+<line x1="140" y1="360" x2="180" y2="360" stroke="var(--text-primary)" stroke-width="4"/>
+<text class="ts" x="160" y="380" text-anchor="middle">Main door</text>
+<line x1="520" y1="110" x2="520" y2="150" stroke="var(--text-secondary)" stroke-width="3"/>
+<line x1="46" y1="362" x2="46" y2="380" stroke="var(--text-muted)" stroke-width="3"/>
+<text class="ts muted" x="50" y="432">Neighbour</text>
+<line x1="334" y1="362" x2="334" y2="380" stroke="var(--text-muted)" stroke-width="3"/>
+<text class="ts muted" x="270" y="432">Neighbour</text>
+
+<g id="cones"></g>
+<g id="pins"></g>
+</svg>
+<div id="toggles"></div>
+<button type="button" class="cta" id="tryBtn">Try out your floor plan</button>
+</section>
+
+<!-- ============ CUSTOM VIEW ============ -->
+<section id="viewCustom" hidden>
+  <div class="tools" role="group" aria-label="Tools">
+    <button type="button" data-tool="line" aria-pressed="true">Line</button>
+    <button type="button" data-tool="text" aria-pressed="false">Text</button>
+    <button type="button" data-tool="in" aria-pressed="false"><span class="dot" style="background:#1D9E75"></span>Indoor</button>
+    <button type="button" data-tool="out" aria-pressed="false"><span class="dot" style="background:#EF9F27"></span>Outdoor</button>
+    <button type="button" data-tool="aim" aria-pressed="false">Aim</button>
+    <button type="button" data-tool="erase" aria-pressed="false">Erase</button>
+    <button type="button" data-tool="pan" aria-pressed="false">Pan</button>
+  </div>
+  <div class="actions">
+    <button type="button" id="btnUndo" disabled>Undo</button>
+    <button type="button" id="btnRedo" disabled>Redo</button>
+    <button type="button" id="btnClear" disabled>Clear all</button>
+    <button type="button" id="btnFit">Reset view</button>
+  </div>
+  <p class="hint" id="hint" aria-live="polite"></p>
+  <div id="textbar" hidden>
+    <input type="text" id="textInput" maxlength="40" placeholder="Type a label" autocomplete="off" aria-label="Label text">
+    <button type="button" id="textAdd">Add</button>
+    <button type="button" id="textCancel">Cancel</button>
+  </div>
+
+  <svg id="canvas" role="img" aria-label="Drawing canvas with dotted grid">
+    <defs>
+      <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+        <circle cx="0" cy="0" r="1.3" fill="var(--text-muted)"/>
+      </pattern>
+    </defs>
+    <g id="world">
+      <rect x="0" y="0" width="520" height="520" fill="var(--surface-2)" stroke="var(--border-strong)" stroke-width="1.5"/>
+      <rect x="-1" y="-1" width="522" height="522" fill="url(#dots)"/>
+      <g id="cCones"></g>
+      <g id="cLines"></g>
+      <g id="cTexts"></g>
+      <g id="cPins"></g>
+      <g id="cDraft"></g>
+    </g>
+  </svg>
+
+  <label class="check" style="margin-top:8px"><input type="checkbox" id="showCones"> Show coverage cones</label>
+</section>
+
+<!-- ============ SHARED ============ -->
+<div class="sliders">
+  <label for="fov">Field of view</label>
+  <input type="range" id="fov" min="60" max="130" step="5" value="100">
+  <output id="fovo" for="fov">100°</output>
+  <label for="rng">Range</label>
+  <input type="range" id="rng" min="60" max="160" step="5" value="100">
+  <output id="rngo" for="rng">100%</output>
+</div>
+
+<div class="legend">
+  <span><i style="background:#1D9E75"></i>Indoor</span>
+  <span><i style="background:#EF9F27"></i>Outdoor</span>
+</div>
+</main>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var IN='#1D9E75',OUT='#EF9F27';
+function $(id){return document.getElementById(id);}
+function mk(name,attrs){
+  var e=document.createElementNS(NS,name);
+  for(var k in attrs)e.setAttribute(k,attrs[k]);
+  return e;
+}
+function conePath(x,y,a,r,f){
+  var a1=(a-f/2)*Math.PI/180,a2=(a+f/2)*Math.PI/180,
+      x1=x+r*Math.cos(a1),y1=y+r*Math.sin(a1),
+      x2=x+r*Math.cos(a2),y2=y+r*Math.sin(a2);
+  return 'M'+x+' '+y+' L'+x1.toFixed(1)+' '+y1.toFixed(1)+' A'+r.toFixed(1)+' '+r.toFixed(1)+' 0 '+(f>180?1:0)+' 1 '+x2.toFixed(1)+' '+y2.toFixed(1)+' Z';
+}
+function fovVal(){return +$('fov').value;}
+function rngScale(){return +$('rng').value/100;}
+
+/* ================= EXAMPLE ================= */
+var cams=[
+{n:'1',name:'Door camera or doorbell',x:160,y:364,a:90,r:55,clip:'clipCor',c:OUT,on:true},
+{n:'2',name:'Entry foyer',x:68,y:258,a:48,r:150,clip:'clipIn',c:IN,on:true},
+{n:'3',name:'Living room',x:68,y:48,a:40,r:230,clip:'clipIn',c:IN,on:true},
+{n:'4',name:'Balcony',x:612,y:68,a:135,r:120,clip:'clipBal',c:OUT,on:true}
+];
+function drawExample(){
+  var g=$('cones');g.innerHTML='';
+  var f=fovVal(),s=rngScale();
+  cams.forEach(function(c){
+    if(!c.on)return;
+    var p=mk('path',{d:conePath(c.x,c.y,c.a,c.r*s,f),fill:c.c,'fill-opacity':'0.28',stroke:c.c,'stroke-width':'0.8','clip-path':'url(#'+c.clip+')'});
+    g.appendChild(p);
+  });
+}
+function buildExample(){
+  var g=$('pins');
+  cams.forEach(function(c){
+    var e=mk('g',{});
+    e.appendChild(mk('circle',{cx:c.x,cy:c.y,r:11,fill:c.c,stroke:'var(--text-primary)','stroke-width':'0.8'}));
+    var t=mk('text',{class:'th',x:c.x,y:c.y,'text-anchor':'middle','dominant-baseline':'central',fill:'#04342C',style:'font-size:14px'});
+    t.textContent=c.n;
+    e.appendChild(t);
+    g.appendChild(e);
+  });
+  var tg=$('toggles');
+  cams.forEach(function(c){
+    var l=document.createElement('label');l.className='check';
+    var cb=document.createElement('input');cb.type='checkbox';cb.checked=true;
+    cb.onchange=function(){c.on=this.checked;drawExample();};
+    l.appendChild(cb);
+    l.appendChild(document.createTextNode(c.n+'. '+c.name));
+    tg.appendChild(l);
+  });
+}
+
+/* ================= CUSTOM ================= */
+var W=520,H=520,G=20,PR=13,BASE_R=120;
+var st={lines:[],texts:[],cams:[]};
+var undoS=[],redoS=[];
+var tool='line';
+var view={s:1,x:0,y:0};
+var viewTouched=false;
+var pending=null;   // pending text position
+var draft=null;     // line being drawn
+var cv=$('canvas'),world=$('world');
+
+var HINTS={
+  line:'Drag between dots to draw a straight line.',
+  text:'Tap a dot, then type your label below.',
+  'in':'Tap a dot to place an indoor camera.',
+  out:'Tap a dot to place an outdoor camera.',
+  aim:'Drag from a camera toward where it should look. Turn on coverage cones to see it.',
+  erase:'Tap a line, label or camera to delete it.',
+  pan:'Drag to move the canvas.'
+};
+function setHint(){$('hint').textContent=HINTS[tool]+' Pinch with two fingers to zoom or pan.';}
+
+function snap(v,max){return Math.min(max,Math.max(0,Math.round(v/G)*G));}
+function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+
+function pushUndo(){
+  undoS.push(JSON.stringify(st));
+  if(undoS.length>100)undoS.shift();
+  redoS=[];
+  updButtons();
+}
+function doUndo(){
+  if(!undoS.length)return;
+  redoS.push(JSON.stringify(st));
+  st=JSON.parse(undoS.pop());
+  cancelPending();renderCustom();updButtons();
+}
+function doRedo(){
+  if(!redoS.length)return;
+  undoS.push(JSON.stringify(st));
+  st=JSON.parse(redoS.pop());
+  cancelPending();renderCustom();updButtons();
+}
+function updButtons(){
+  $('btnUndo').disabled=!undoS.length;
+  $('btnRedo').disabled=!redoS.length;
+  $('btnClear').disabled=!(st.lines.length||st.texts.length||st.cams.length);
+}
+
+function applyView(){
+  world.setAttribute('transform','translate('+view.x.toFixed(2)+' '+view.y.toFixed(2)+') scale('+view.s.toFixed(4)+')');
+}
+function fitView(){
+  var r=cv.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  var s=Math.min(r.width/W,r.height/H)*0.97;
+  view.s=s;view.x=(r.width-W*s)/2;view.y=(r.height-H*s)/2;
+  applyView();
+}
+function toWorld(cx,cy){
+  var r=cv.getBoundingClientRect();
+  return {x:(cx-r.left-view.x)/view.s,y:(cy-r.top-view.y)/view.s};
+}
+
+function renderCustom(){
+  var showC=$('showCones').checked,f=fovVal(),s=rngScale();
+  var cones=$('cCones'),lines=$('cLines'),texts=$('cTexts'),pins=$('cPins'),dr=$('cDraft');
+  cones.innerHTML='';lines.innerHTML='';texts.innerHTML='';pins.innerHTML='';dr.innerHTML='';
+
+  if(showC){
+    st.cams.forEach(function(c){
+      var col=c.t==='in'?IN:OUT;
+      cones.appendChild(mk('path',{d:conePath(c.x,c.y,c.a,BASE_R*s,f),fill:col,'fill-opacity':'0.28',stroke:col,'stroke-width':'0.8'}));
+    });
+  }
+  st.lines.forEach(function(l){
+    lines.appendChild(mk('line',{x1:l.x1,y1:l.y1,x2:l.x2,y2:l.y2,stroke:'var(--text-primary)','stroke-width':3,'stroke-linecap':'round'}));
+  });
+  st.texts.forEach(function(t){
+    var e=mk('text',{x:t.x,y:t.y,fill:'var(--text-primary)','font-size':14});
+    e.textContent=t.t;
+    texts.appendChild(e);
+  });
+  st.cams.forEach(function(c,i){
+    var col=c.t==='in'?IN:OUT;
+    if(tool==='aim'){
+      var rad=c.a*Math.PI/180;
+      pins.appendChild(mk('line',{x1:c.x,y1:c.y,x2:c.x+Math.cos(rad)*(PR+14),y2:c.y+Math.sin(rad)*(PR+14),stroke:'var(--text-primary)','stroke-width':3,'stroke-linecap':'round'}));
+    }
+    pins.appendChild(mk('circle',{cx:c.x,cy:c.y,r:PR,fill:col,stroke:'var(--text-primary)','stroke-width':1}));
+    var t=mk('text',{x:c.x,y:c.y,'text-anchor':'middle','dominant-baseline':'central',fill:'#04342C','font-size':14,'font-weight':600});
+    t.textContent=String(i+1);
+    pins.appendChild(t);
+  });
+  if(draft){
+    dr.appendChild(mk('line',{x1:draft.x1,y1:draft.y1,x2:draft.x2,y2:draft.y2,stroke:'var(--accent)','stroke-width':3,'stroke-dasharray':'6 4','stroke-linecap':'round'}));
+    dr.appendChild(mk('circle',{cx:draft.x1,cy:draft.y1,r:4,fill:'var(--accent)'}));
+  }
+  if(pending){
+    dr.appendChild(mk('circle',{cx:pending.x,cy:pending.y,r:5,fill:'var(--accent)'}));
+  }
+}
+
+/* Hit testing (world coords; tolerances scaled to screen) */
+function hit(p){
+  var k=1/view.s,i;
+  for(i=st.cams.length-1;i>=0;i--){
+    var c=st.cams[i];
+    if(Math.hypot(p.x-c.x,p.y-c.y)<=PR+8*k)return {k:'cams',i:i};
+  }
+  for(i=st.texts.length-1;i>=0;i--){
+    var t=st.texts[i],w=t.t.length*8;
+    if(p.x>=t.x-6*k&&p.x<=t.x+w+6*k&&p.y>=t.y-14-6*k&&p.y<=t.y+4+6*k)return {k:'texts',i:i};
+  }
+  for(i=st.lines.length-1;i>=0;i--){
+    var l=st.lines[i];
+    if(segDist(p,l)<=10*k)return {k:'lines',i:i};
+  }
+  return null;
+}
+function hitCam(p){
+  var k=1/view.s,best=null,bd=1e9;
+  st.cams.forEach(function(c){
+    var d=Math.hypot(p.x-c.x,p.y-c.y);
+    if(d<=PR+14*k&&d<bd){bd=d;best=c;}
+  });
+  return best;
+}
+function segDist(p,l){
+  var dx=l.x2-l.x1,dy=l.y2-l.y1,len2=dx*dx+dy*dy;
+  var t=len2?clamp(((p.x-l.x1)*dx+(p.y-l.y1)*dy)/len2,0,1):0;
+  return Math.hypot(p.x-(l.x1+t*dx),p.y-(l.y1+t*dy));
+}
+
+/* Text entry */
+function setPending(p){
+  pending={x:snap(p.x,W),y:snap(p.y,H)};
+  $('textbar').hidden=false;
+  $('textInput').value='';
+  renderCustom();
+  $('textInput').focus();
+}
+function cancelPending(){
+  pending=null;
+  $('textbar').hidden=true;
+  $('textInput').blur();
+  renderCustom();
+}
+function commitText(){
+  var v=$('textInput').value.trim();
+  if(!pending||!v){cancelPending();return;}
+  pushUndo();
+  st.texts.push({x:pending.x,y:pending.y,t:v});
+  cancelPending();
+  updButtons();
+}
+
+/* Pointer handling: one finger uses the tool, two fingers pinch / pan */
+var ptrs={},gest=null,act=null;
+
+function startGesture(){
+  var ids=Object.keys(ptrs);
+  var a=ptrs[ids[0]],b=ptrs[ids[1]];
+  var r=cv.getBoundingClientRect();
+  var mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+  gest={
+    d0:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),
+    v0:{s:view.s,x:view.x,y:view.y},
+    wx:((mx-r.left)-view.x)/view.s,
+    wy:((my-r.top)-view.y)/view.s,
+    ids:[ids[0],ids[1]]
+  };
+}
+function updateGesture(){
+  var a=ptrs[gest.ids[0]],b=ptrs[gest.ids[1]];
+  if(!a||!b)return;
+  var r=cv.getBoundingClientRect();
+  var mx=(a.x+b.x)/2-r.left,my=(a.y+b.y)/2-r.top;
+  var d=Math.hypot(a.x-b.x,a.y-b.y);
+  var s=clamp(gest.v0.s*d/gest.d0,0.3,8);
+  view.s=s;view.x=mx-gest.wx*s;view.y=my-gest.wy*s;
+  viewTouched=true;
+  applyView();
+}
+
+cv.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+  if(Object.keys(ptrs).length>=2){
+    if(!gest)startGesture();
+    act=null;draft=null;renderCustom();
+    return;
+  }
+  var p=toWorld(e.clientX,e.clientY);
+  act={id:e.pointerId,sx:e.clientX,sy:e.clientY,moved:false,tool:tool,p:p,pushed:false};
+  if(tool==='line'){
+    var sx=snap(p.x,W),sy=snap(p.y,H);
+    draft={x1:sx,y1:sy,x2:sx,y2:sy};
+  }else if(tool==='pan'){
+    act.vx=view.x;act.vy=view.y;
+  }else if(tool==='aim'){
+    act.cam=hitCam(p);
+    if(act.cam)act.a0=act.cam.a;
+  }
+  renderCustom();
+});
+
+cv.addEventListener('pointermove',function(e){
+  if(!ptrs[e.pointerId])return;
+  ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+  if(gest){updateGesture();return;}
+  if(!act||act.id!==e.pointerId)return;
+  var dist=Math.hypot(e.clientX-act.sx,e.clientY-act.sy);
+  if(dist>8)act.moved=true;
+  var p=toWorld(e.clientX,e.clientY);
+  if(act.tool==='line'&&draft){
+    draft.x2=snap(p.x,W);draft.y2=snap(p.y,H);
+    renderCustom();
+  }else if(act.tool==='pan'){
+    view.x=act.vx+(e.clientX-act.sx);
+    view.y=act.vy+(e.clientY-act.sy);
+    viewTouched=true;
+    applyView();
+  }else if(act.tool==='aim'&&act.cam&&act.moved){
+    if(!act.pushed){
+      // snapshot with the aim as it was before this drag
+      var keep=act.cam.a;act.cam.a=act.a0!==undefined?act.a0:keep;
+      pushUndo();act.cam.a=keep;act.pushed=true;
+    }
+    act.cam.a=Math.round(Math.atan2(p.y-act.cam.y,p.x-act.cam.x)*180/Math.PI);
+    renderCustom();
+  }
+});
+
+function endPointer(e,cancelled){
+  if(!ptrs[e.pointerId])return;
+  delete ptrs[e.pointerId];
+  if(gest){
+    if(Object.keys(ptrs).length<2)gest=null;
+    act=null;draft=null;renderCustom();
+    return;
+  }
+  if(!act||act.id!==e.pointerId)return;
+  var a=act;act=null;
+  if(cancelled){draft=null;renderCustom();return;}
+  if(a.tool==='line'){
+    if(draft&&(draft.x1!==draft.x2||draft.y1!==draft.y2)){
+      pushUndo();
+      st.lines.push({x1:draft.x1,y1:draft.y1,x2:draft.x2,y2:draft.y2});
+    }
+    draft=null;
+  }else if(!a.moved){
+    if(a.tool==='in'||a.tool==='out'){
+      pushUndo();
+      st.cams.push({t:a.tool,x:snap(a.p.x,W),y:snap(a.p.y,H),a:90});
+    }else if(a.tool==='text'){
+      setPending(a.p);
+    }else if(a.tool==='erase'){
+      var h=hit(a.p);
+      if(h){pushUndo();st[h.k].splice(h.i,1);}
+    }
+  }
+  renderCustom();updButtons();
+}
+cv.addEventListener('pointerup',function(e){endPointer(e,false);});
+cv.addEventListener('pointercancel',function(e){endPointer(e,true);});
+cv.addEventListener('contextmenu',function(e){e.preventDefault();});
+
+/* Mouse wheel zoom for desktop testing */
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  var wx=(mx-view.x)/view.s,wy=(my-view.y)/view.s;
+  var s=clamp(view.s*(e.deltaY<0?1.1:1/1.1),0.3,8);
+  view.s=s;view.x=mx-wx*s;view.y=my-wy*s;
+  viewTouched=true;applyView();
+},{passive:false});
+
+/* Toolbar */
+Array.prototype.forEach.call(document.querySelectorAll('[data-tool]'),function(b){
+  b.addEventListener('click',function(){
+    tool=b.getAttribute('data-tool');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-tool]'),function(x){
+      x.setAttribute('aria-pressed',x===b?'true':'false');
+    });
+    draft=null;
+    if(tool!=='text')cancelPending();
+    setHint();renderCustom();
+  });
+});
+$('btnUndo').onclick=doUndo;
+$('btnRedo').onclick=doRedo;
+$('btnClear').onclick=function(){
+  if(!(st.lines.length||st.texts.length||st.cams.length))return;
+  pushUndo();
+  st={lines:[],texts:[],cams:[]};
+  cancelPending();renderCustom();updButtons();
+};
+$('btnFit').onclick=function(){viewTouched=false;fitView();};
+$('textAdd').onclick=commitText;
+$('textCancel').onclick=cancelPending;
+$('textInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();commitText();}
+});
+$('showCones').addEventListener('change',renderCustom);
+
+/* ================= SWITCH & SHARED ================= */
+function showView(custom){
+  $('viewExample').hidden=custom;
+  $('viewCustom').hidden=!custom;
+  $('swExample').setAttribute('aria-pressed',custom?'false':'true');
+  $('swCustom').setAttribute('aria-pressed',custom?'true':'false');
+  if(custom){
+    if(!viewTouched)fitView();
+    renderCustom();
+  }else{
+    cancelPending();
+  }
+  window.scrollTo(0,0);
+}
+$('swExample').onclick=function(){showView(false);};
+$('swCustom').onclick=function(){showView(true);};
+$('tryBtn').onclick=function(){showView(true);};
+
+function onSlide(){
+  $('fovo').textContent=fovVal()+'°';
+  $('rngo').textContent=Math.round(rngScale()*100)+'%';
+  drawExample();
+  if(!$('viewCustom').hidden)renderCustom();
+}
+$('fov').addEventListener('input',onSlide);
+$('rng').addEventListener('input',onSlide);
+
+window.addEventListener('resize',function(){
+  if(!$('viewCustom').hidden&&!viewTouched)fitView();
+});
+
+buildExample();
+onSlide();
+setHint();
+updButtons();
+})();
+</script>
+</body>
+</html>
