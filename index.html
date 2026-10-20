@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Camera planner</title>
+<style>
+:root{--bg:#f9f9f7;--s1:#fcfcfb;--s2:#fff;--tx:#0b0b0b;--tx2:#52514e;--mut:#898781;--bd:rgba(11,11,11,.1);--bd2:rgba(11,11,11,.22);--ac:#2a78d6;--acbg:rgba(42,120,214,.14);--bad:#c0392b;--ok:#1D9E75}
+@media(prefers-color-scheme:dark){:root{--bg:#0b0b0b;--s1:#1a1a19;--s2:#242423;--tx:#f0efec;--tx2:#c3c2b7;--bd:rgba(255,255,255,.12);--bd2:rgba(255,255,255,.25);--ac:#6da7ec;--acbg:rgba(109,167,236,.2);--bad:#ff7b6b;--ok:#3fd0a0}}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);line-height:1.4;padding:16px max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));padding-top:max(16px,env(safe-area-inset-top))}
+main{max-width:800px;margin:0 auto}
+h1{font-size:1.35rem;margin-bottom:10px}h2{font-size:1rem;margin:0 0 8px}
+.steps{display:flex;gap:6px;margin-bottom:14px;font-size:.8rem;color:var(--mut)}
+.steps span{flex:1;padding:6px;border-radius:8px;border:1px solid var(--bd);text-align:center}
+.steps .on{background:var(--acbg);border-color:var(--ac);color:var(--ac);font-weight:600}
+.card{background:var(--s1);border:1px solid var(--bd2);border-radius:12px;padding:14px;margin-bottom:12px}
+.l{display:block;font-size:.85rem;color:var(--tx2);margin:0 0 6px}
+.budget{display:grid;grid-template-columns:1fr 150px;gap:12px;align-items:center}
+input[type=number],select{width:100%;min-height:44px;padding:8px 10px;font-size:16px;background:var(--s2);color:var(--tx);border:1px solid var(--bd2);border-radius:8px}
+input[type=range]{width:100%;height:44px;accent-color:var(--ac)}
+.seg{display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.seg button,.add button,.stp button{min-height:46px;padding:6px 8px;border:1px solid var(--bd2);border-radius:10px;background:var(--s2);color:var(--tx);font:inherit;font-size:.9rem;cursor:pointer;text-align:left}
+.seg button{text-align:center}
+.seg small,.add small{display:block;color:var(--mut);font-size:.75rem}
+.seg button[aria-pressed=true]{background:var(--acbg);border-color:var(--ac);color:var(--ac);font-weight:600}
+button:disabled{opacity:.4;cursor:not-allowed}
+.add{display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.add button svg{width:34px;height:20px;float:left;margin:2px 8px 0 0}
+svg *{stroke:currentColor;fill:none;stroke-width:1.6}svg .f{fill:currentColor;stroke:none}
+.crow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);font-size:.88rem}
+.stp{display:flex;align-items:center;gap:8px}.stp button{width:44px;text-align:center;font-size:1.1rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.row2,.budget{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th,td{padding:7px 4px;border-bottom:1px solid var(--bd);text-align:right}th:first-child,td:first-child{text-align:left}
+th{color:var(--mut);font-weight:500;font-size:.78rem}tr.tot td{font-weight:700;border-bottom:0}
+.wrap{overflow-x:auto}
+.bar{height:10px;background:var(--bd);border-radius:6px;overflow:hidden;margin:8px 0 4px}.bar i{display:block;height:100%;background:var(--ok)}
+.bar.over i{background:var(--bad)}
+.msg{font-size:.85rem;padding:10px 12px;border-radius:8px;border:1px solid var(--bd2);background:var(--s2);margin:8px 0;color:var(--tx2)}
+.msg.bad{border-color:var(--bad);color:var(--bad)}
+ul.notes{margin:6px 0 0 18px;font-size:.82rem;color:var(--tx2)}ul.notes li{margin:3px 0}
+details summary{cursor:pointer;font-weight:600;font-size:.9rem;min-height:36px;display:flex;align-items:center}
+.pgrid{display:grid;grid-template-columns:1fr 110px;gap:6px 10px;align-items:center;font-size:.85rem;margin-top:8px}.pgrid input{min-height:38px;font-size:15px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-size:1rem;font-weight:600;cursor:pointer;text-decoration:none;margin-top:10px}
+.btn.alt{background:transparent;color:var(--tx);border:1px solid var(--bd2)}
+.vis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.vis button,.vis a{display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:10px;border:1px solid var(--ac);font:inherit;font-weight:700;text-decoration:none;cursor:pointer;background:transparent;color:var(--ac)}
+.vis button[aria-pressed=true]{background:var(--ac);color:#fff}
+iframe{width:100%;height:80vh;min-height:520px;border:1px solid var(--bd2);border-radius:12px;background:var(--bg)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+details.sec{margin-bottom:14px}
+details.sec>summary{cursor:pointer;font-weight:700;font-size:1.05rem;min-height:48px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--bd2);border-radius:12px;background:var(--s1);margin-bottom:10px}
+details.sec>summary small{font-weight:400;font-size:.78rem;color:var(--mut)}
+</style>
+</head>
+<body>
+<main>
+<h1>Camera planner</h1>
+<p style="color:var(--tx2);font-size:.92rem;margin-bottom:14px">Choose an option to open it.</p>
+
+<details class="sec" id="s1"><summary>Budget &amp; cameras</summary>
+  <div class="card">
+    <label class="l" for="budgetNum">Camera budget (₹)</label>
+    <div class="budget">
+      <input type="range" id="budgetRange" min="5000" max="200000" step="500" value="50000" aria-label="Budget slider">
+      <input type="number" id="budgetNum" min="0" step="500" inputmode="numeric" value="50000">
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="l">Recording system</label>
+    <div class="seg" data-k="sys">
+      <button type="button" data-v="dvr">HD camera + DVR<small>Analog HD, max 4 cameras</small></button>
+      <button type="button" data-v="nvr">IP camera + NVR<small>PoE, max 7 cameras</small></button>
+    </div>
+    <label class="l" style="margin-top:14px">Connection</label>
+    <div class="seg" data-k="conn">
+      <button type="button" data-v="wired">Wired<small id="wiredSub">analog</small></button>
+      <button type="button" data-v="wifi">Wireless (WiFi)</button>
+      <button type="button" data-v="battery">Battery</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Add cameras (mix any types)</h2>
+    <div class="add" id="add"></div>
+    <p class="msg" id="addNote" hidden></p>
+    <div id="cart" style="margin-top:8px"></div>
+    <div class="row2" style="margin-top:12px" id="runBox">
+      <div><label class="l" for="run">Average cable run per camera (m)</label><input type="number" id="run" min="1" value="15" inputmode="numeric"></div>
+      <div id="conduitBox"><label class="l" for="conduit">Conduit units per camera</label><input type="number" id="conduit" min="0" value="1" inputmode="numeric"></div>
+    </div>
+    <div id="wireBox" style="margin-top:12px"><label class="l" for="wireSel">DVR cable</label><select id="wireSel"></select></div>
+  </div>
+
+  <div class="card">
+    <h2>Cost estimate</h2>
+    <p class="msg"><b>All prices are approximate</b> and exclude GST. Actual quotes will vary by dealer, city and date.</p>
+    <div id="alert"></div>
+    <div class="wrap"><table id="tbl"></table></div>
+    <div class="bar" id="bar"><i></i></div>
+    <div id="barTxt" style="font-size:.85rem;color:var(--tx2)"></div>
+    <ul class="notes" id="notes"></ul>
+  </div>
+
+  <details class="card"><summary>Edit price list</summary><div class="pgrid" id="pgrid"></div></details>
+  <button type="button" class="btn" id="toVis">Visualize</button>
+</details>
+
+<details class="sec" id="s2"><summary>Visualize</summary>
+  <div class="vis">
+    <button type="button" id="v2d" aria-pressed="true">2D plan</button>
+    <a href="google%20AR/wall-cameras-ar.html" id="l3d">3D (AR) ↗</a>
+  </div>
+  <div class="card" id="sum"></div>
+  <iframe id="frame" title="2D floor plan and coverage"></iframe>
+  <button type="button" class="btn alt" id="back">↑ Edit budget &amp; cameras</button>
+</details>
+</main>
+
+<script>
+(function(){
+var $=function(id){return document.getElementById(id);};
+var inr=function(n){return '₹'+Math.round(n).toLocaleString('en-IN');};
+var KEY='cameraPlanner.v3';
+
+/* Prices exclude GST. Supplied by you, except those marked est. (web estimates, Oct 2026). All approximate. */
+var P={dvr_nv:2850,dvr_ir:1950,dvr_bul:1850,dvr_tur:1800,dvr_rec:7500,dvr_hdd:2800,dvr_conn:50,dvr_inst:500,wire_25:25,wire_40:40,wire_86:50,dvr_psu:1000,
+nvr_dome:4250,nvr_bullet:4300,nvr_rec:8729,nvr_ssd:5400,nvr_jb:50,nvr_inst:800,nvr_rack:1300,nvr_cat6:35,nvr_switch:5000,nvr_conduit:60,
+wl_dome:0,wl_bullet:0,wl_turret:0};
+var PL=[['dvr_nv','DVR · night vision + audio 2 MP dome'],['dvr_ir','DVR · IR + audio 2 MP dome'],['dvr_bul','DVR · 2 MP audio bullet (estimate)'],['dvr_tur','DVR · 2 MP audio turret (estimate)'],
+['dvr_rec','DVR · 4-ch DVR'],['dvr_hdd','DVR · 500 GB HDD'],['dvr_conn','DVR · connector set (per camera)'],['dvr_inst','DVR · installation (per camera)'],
+['wire_25','DVR · 3+1 wire ₹/m'],['wire_40','DVR · 3+1 wire, 2nd rate ₹/m'],['wire_86','DVR · 86 wire ₹/m'],['dvr_psu','DVR · 4-ch power supply'],
+['nvr_dome','NVR · 4 MP dome (excl. GST)'],['nvr_bullet','NVR · 4 MP bullet (excl. GST)'],['nvr_rec','NVR · 8-ch NVR'],['nvr_ssd','NVR · 2 TB SSD'],['nvr_jb','NVR · junction box (per camera)'],
+['nvr_inst','NVR · installation (per camera)'],['nvr_rack','NVR · 4U rack'],['nvr_cat6','NVR · CAT 6 ₹/m'],['nvr_switch','NVR · 8-port PoE switch'],['nvr_conduit','NVR · conduit (per unit)'],
+['wl_dome','Wireless/battery · dome (your price)'],['wl_bullet','Wireless/battery · bullet (your price)'],['wl_turret','Wireless/battery · turret (your price)']];
+var ICON={dome:'<svg viewBox="0 0 34 20"><rect x="4" y="2" width="26" height="3" rx="1"/><path class="f" d="M9 5h16a8 8 0 0 1-16 0z"/></svg>',
+bullet:'<svg viewBox="0 0 34 20"><rect x="3" y="1" width="3" height="18" rx="1"/><rect x="9" y="5" width="22" height="10" rx="5"/><circle class="f" cx="26" cy="10" r="3"/></svg>',
+turret:'<svg viewBox="0 0 34 20"><rect x="5" y="2" width="24" height="3" rx="1"/><rect x="8" y="5" width="18" height="5" rx="2"/><path class="f" d="M13 10h8a4 4 0 0 1-8 0z"/></svg>'};
+var CAT={
+ dvr:[{id:'nv',f:'dome',n:'Night vision + audio 2 MP dome',k:'dvr_nv'},{id:'ir',f:'dome',n:'IR + audio 2 MP dome',k:'dvr_ir'},
+      {id:'bu',f:'bullet',n:'2 MP audio HD bullet (est.)',k:'dvr_bul'},{id:'tu',f:'turret',n:'2 MP audio HD turret (est.)',k:'dvr_tur'}],
+ nvr:[{id:'do',f:'dome',n:'4 MP dome IP',k:'nvr_dome'},{id:'bu',f:'bullet',n:'4 MP bullet IP',k:'nvr_bullet'}],
+ wl:[{id:'do',f:'dome',n:'Dome',k:'wl_dome'},{id:'bu',f:'bullet',n:'Bullet',k:'wl_bullet'},{id:'tu',f:'turret',n:'Turret',k:'wl_turret'}]};
+var CAP={dvr:4,nvr:7,wl:16};
+var S={budget:50000,sys:'dvr',conn:'wired',wire:'wire_25',run:15,conduit:1,carts:{dvr:{},nvr:{},wl:{}}};
+function num(v,d){v=parseFloat(v);return isFinite(v)&&v>=0?v:d;}
+function key(){return S.conn==='wired'?S.sys:'wl';}
+
+try{var sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv){
+  ['budget','sys','conn','wire','run','conduit'].forEach(function(k){if(sv[k]!==undefined)S[k]=sv[k];});
+  if(sv.carts)['dvr','nvr','wl'].forEach(function(k){S.carts[k]=sv.carts[k]||{};});
+  if(sv.P)for(var k in sv.P)if(k in P)P[k]=num(sv.P[k],P[k]);}}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({budget:S.budget,sys:S.sys,conn:S.conn,wire:S.wire,run:S.run,conduit:S.conduit,carts:S.carts,P:P}));}catch(e){}}
+
+/* cost of a cart (+ optionally one extra camera of item id) */
+function calc(k,extra){
+  var cart=S.carts[k],lines=[],n=0,tot=0;
+  function ln(name,q,u,unit){var a=q*u;tot+=a;lines.push({n:name,q:q,u:u,unit:unit||'',a:a});}
+  CAT[k].forEach(function(it){var q=(cart[it.id]||0)+(extra===it.id?1:0);if(q){n+=q;ln(it.n,q,P[it.k]);}});
+  if(!n)return{n:0,total:0,lines:[]};
+  if(k==='dvr'){
+    ln('Connector set',n,P.dvr_conn);ln('Installation',n,P.dvr_inst);ln('Cable ('+S.wire.replace('wire_','')+')',n*S.run,P[S.wire],'m');
+    ln('4-ch DVR (Hikvision HQX)',1,P.dvr_rec);ln('500 GB HDD',1,P.dvr_hdd);ln('4-channel power supply',1,P.dvr_psu);
+  }else if(k==='nvr'){
+    ln('Junction box',n,P.nvr_jb);ln('Installation',n,P.nvr_inst);ln('CAT 6 cable',n*S.run,P.nvr_cat6,'m');ln('1-inch PVC conduit',n*S.conduit,P.nvr_conduit);
+    ln('8-ch NVR 7608NXI-K1',1,P.nvr_rec);ln('2 TB SSD (WD Blue)',1,P.nvr_ssd);ln('4U server rack',1,P.nvr_rack);ln('8-port PoE switch',1,P.nvr_switch);
+  }
+  return{n:n,total:tot,lines:lines};
+}
+function count(k){return CAT[k].reduce(function(a,it){return a+(S.carts[k][it.id]||0);},0);}
+
+function setSeg(k,val){Array.prototype.forEach.call(document.querySelector('.seg[data-k="'+k+'"]').children,function(b){b.setAttribute('aria-pressed',b.dataset.v===val?'true':'false');});}
+
+function render(){
+  var k=key(),wired=S.conn==='wired',cart=S.carts[k],cur=calc(k);
+  setSeg('sys',S.sys);setSeg('conn',S.conn);
+  $('wiredSub').textContent=S.sys==='dvr'?'analog':'PoE';
+  $('runBox').hidden=!wired;$('conduitBox').hidden=!(wired&&S.sys==='nvr');$('wireBox').hidden=!(wired&&S.sys==='dvr');
+
+  /* add buttons */
+  var h='';
+  CAT[k].forEach(function(it){
+    var u=P[it.k],why='';
+    if(!(u>0))why='Set a price in "Edit price list"';
+    else if(cur.n>=CAP[k])why='Limit of '+CAP[k]+' cameras reached';
+    else if(calc(k,it.id).total>S.budget)why='Would exceed budget (total '+inr(calc(k,it.id).total)+')';
+    h+='<button type="button" data-add="'+it.id+'"'+(why?' disabled title="'+why+'"':'')+'>'+ICON[it.f]+'+ '+it.n+'<small>'+(u>0?inr(u)+' each':'no price set')+'</small></button>';
+  });
+  $('add').innerHTML=h;
+  var nt=$('addNote');nt.hidden=true;
+  if(!wired&&!CAT.wl.some(function(i){return P[i.k]>0;})){nt.hidden=false;nt.textContent='No wireless or battery prices were provided. Enter them in "Edit price list"; the estimate then covers cameras only.';}
+  else if(wired&&calc(k,CAT[k][0].id).total>S.budget&&cur.n===0){nt.hidden=false;nt.textContent='Budget too low: the cheapest 1-camera setup costs '+inr(Math.min.apply(null,CAT[k].map(function(i){return calc(k,i.id).total;})))+'.';}
+  else if(cur.n>=CAP[k]){nt.hidden=false;nt.textContent='Limit reached: '+CAP[k]+' cameras for this setup.';}
+
+  /* cart */
+  var c='';
+  CAT[k].forEach(function(it){var q=cart[it.id]||0;if(!q)return;
+    c+='<div class="crow"><span>'+ICON[it.f].replace('<svg','<svg style="width:30px;height:18px;vertical-align:middle;margin-right:8px"')+it.n+' · '+inr(P[it.k])+'</span><span class="stp"><button type="button" data-dec="'+it.id+'" aria-label="Remove one">−</button><b>'+q+'</b></span></div>';});
+  $('cart').innerHTML=c||'<p style="font-size:.85rem;color:var(--mut)">No cameras added yet.</p>';
+
+  /* table */
+  var r='<tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>';
+  cur.lines.forEach(function(l){r+='<tr><td>'+l.n+'</td><td>'+l.q+(l.unit?' '+l.unit:'')+'</td><td>'+inr(l.u)+'</td><td>'+inr(l.a)+'</td></tr>';});
+  r+='<tr class="tot"><td colspan="3">Total ('+cur.n+(cur.n===1?' camera)':' cameras)')+'</td><td>'+inr(cur.total)+'</td></tr>';
+  $('tbl').innerHTML=r;
+  var over=cur.total>S.budget;
+  $('bar').className='bar'+(over?' over':'');
+  $('bar').firstElementChild.style.width=Math.min(100,S.budget?cur.total/S.budget*100:100)+'%';
+  $('barTxt').textContent=over?'Over budget by '+inr(cur.total-S.budget)+' (budget lowered after adding)':inr(S.budget-cur.total)+' left of '+inr(S.budget);
+  $('alert').innerHTML=over?'<p class="msg bad">Total is above your budget. Remove cameras or raise the budget.</p>':'';
+
+  var N=[];
+  if(k==='dvr'){N.push('DVR is 4-channel (max 4 cameras); one power supply is counted.','"2 V service wire" had no price, so it is not costed.','Bullet ₹1,850 and turret ₹1,800 are web estimates (see below), not quotes.','Connector set is per camera. ₹25/m and ₹40/m are two 3+1 options; 86 wire is ₹50/m.');}
+  else if(k==='nvr'){N.push('Max 7 cameras: the 8-port switch uses one port for the NVR (7608NXI-K1 has no built-in PoE).','No turret IP price was given, so only dome and bullet are offered.','Junction box is per camera; conduit units per camera are set above.');}
+  else N.push('Wireless/battery estimates cover cameras only (no recorder, cable or installation).');
+  N.push('All prices are approximate and exclude GST.');N.push('Indoor/outdoor split used in 2D: dome and turret indoor, bullet outdoor.');
+  $('notes').innerHTML=N.map(function(t){return '<li>'+t+'</li>';}).join('');
+  $('toVis').textContent=cur.n?'Visualize':'Visualize without cost estimate';
+  if($('s2').open)summary();
+  persist();
+}
+
+/* events */
+$('budgetRange').addEventListener('input',function(){S.budget=+this.value;$('budgetNum').value=S.budget;render();});
+$('budgetNum').addEventListener('input',function(){S.budget=num(this.value,0);$('budgetRange').value=Math.min(200000,Math.max(5000,S.budget));render();});
+$('budgetNum').addEventListener('blur',function(){this.value=S.budget;});
+Array.prototype.forEach.call(document.querySelectorAll('.seg'),function(g){g.addEventListener('click',function(e){var b=e.target.closest('button');if(b){S[g.dataset.k]=b.dataset.v;render();}});});
+$('add').addEventListener('click',function(e){var b=e.target.closest('button[data-add]');if(!b||b.disabled)return;var c=S.carts[key()];c[b.dataset.add]=(c[b.dataset.add]||0)+1;render();});
+$('cart').addEventListener('click',function(e){var b=e.target.closest('button[data-dec]');if(!b)return;var c=S.carts[key()],i=b.dataset.dec;c[i]=(c[i]||1)-1;if(c[i]<=0)delete c[i];render();});
+$('run').addEventListener('input',function(){S.run=Math.max(1,num(this.value,15));render();});
+$('conduit').addEventListener('input',function(){S.conduit=num(this.value,1);render();});
+$('wireSel').addEventListener('change',function(){S.wire=this.value;render();});
+$('run').value=S.run;$('conduit').value=S.conduit;$('budgetNum').value=S.budget;$('budgetRange').value=Math.min(200000,Math.max(5000,S.budget));
+function opts(){var w=$('wireSel');w.innerHTML='';[['wire_25','3+1 wire'],['wire_40','3+1 wire (2nd rate)'],['wire_86','86 wire']].forEach(function(o){var e=document.createElement('option');e.value=o[0];e.textContent=o[1]+' — '+inr(P[o[0]])+'/m';w.appendChild(e);});w.value=S.wire;}
+PL.forEach(function(p){var l=document.createElement('label');l.textContent=p[1];l.htmlFor='p_'+p[0];var i=document.createElement('input');i.type='number';i.min=0;i.id='p_'+p[0];i.value=P[p[0]];i.inputMode='numeric';
+  i.addEventListener('input',function(){P[p[0]]=num(this.value,0);opts();render();});$('pgrid').appendChild(l);$('pgrid').appendChild(i);});
+
+/* screen 2: 2D plan embedded in this page (no redirect) */
+var poll=null,W={ind:0,out:0,tot:0};
+function summary(){
+  var t=[],ind=0,out=0,k=key();
+  CAT[k].forEach(function(it){var q=S.carts[k][it.id]||0;if(!q)return;if(it.f==='bullet')out+=q;else ind+=q;t.push(q+' × '+it.n);});
+  W={ind:ind,out:out,tot:ind+out};
+  var cur=calc(k);
+  $('sum').innerHTML=W.tot
+   ?'<h2>Your cameras</h2><p style="font-size:.88rem">'+t.join(' · ')+'</p><p style="font-size:.88rem;color:var(--tx2);margin-top:4px">Approx. total '+inr(cur.total)+' (excl. GST) of '+inr(S.budget)+' budget. Place <b>'+ind+' indoor</b> and <b>'+out+' outdoor</b> in the plan.</p><p id="placed" style="font-size:.88rem;margin-top:4px"></p>'
+   :'<p style="font-size:.88rem;color:var(--tx2)">No cost estimate: place any cameras you like. Open "Budget &amp; cameras" above to add a budget and costs.</p><p id="placed" style="font-size:.88rem;margin-top:4px"></p>';
+}
+function watch(){
+  clearInterval(poll);
+  poll=setInterval(function(){
+    try{
+      var d=$('frame').contentDocument,p=d&&d.getElementById('cPins'),el=$('placed');if(!p||!el)return;
+      var a=0,b=0;Array.prototype.forEach.call(p.querySelectorAll('circle'),function(c){if(c.getAttribute('fill')==='#1D9E75')a++;else b++;});
+      var bad=W.tot>0&&(a>W.ind||b>W.out);
+      el.style.color=bad?'var(--bad)':'var(--tx2)';
+      el.textContent='Placed in plan: '+a+' indoor, '+b+' outdoor'+(bad?' — more than you have in your cart.':'.');
+    }catch(e){clearInterval(poll);}
+  },1000);
+}
+$('s2').addEventListener('toggle',function(){
+  if(this.open){
+    if(!$('frame').getAttribute('src'))$('frame').setAttribute('src','flat_camera_coverage_floor_plan.html');
+    summary();watch();
+  }else clearInterval(poll);
+});
+$('toVis').onclick=function(){$('s1').open=false;$('s2').open=true;$('s2').scrollIntoView({behavior:'smooth'});};
+$('back').onclick=function(){$('s1').open=true;$('s1').scrollIntoView({behavior:'smooth'});};
+$('v2d').onclick=function(){$('frame').scrollIntoView({behavior:'smooth'});};
+opts();render();
+})();
+</script>
+</body>
+</html>
