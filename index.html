@@ -55,6 +55,11 @@ iframe{width:100%;height:80vh;min-height:520px;border:1px solid var(--bd2);borde
 details.sec{margin-bottom:14px}
 details.sec>summary{cursor:pointer;font-weight:700;font-size:1.05rem;min-height:48px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--bd2);border-radius:12px;background:var(--s1);margin-bottom:10px}
 details.sec>summary small{font-weight:400;font-size:.78rem;color:var(--mut)}
+footer{margin-top:24px;padding-top:14px;border-top:1px solid var(--bd2);font-size:.85rem;color:var(--tx2);text-align:center}
+footer a{color:var(--ac)}
+footer details{text-align:left;margin-top:10px}
+footer details summary{justify-content:center;font-weight:600;font-size:.85rem;min-height:40px}
+footer details p{font-size:.82rem;margin-top:6px}
 </style>
 </head>
 <body>
@@ -120,6 +125,13 @@ details.sec>summary small{font-weight:400;font-size:.78rem;color:var(--mut)}
   <iframe id="frame" title="2D floor plan and coverage"></iframe>
   <button type="button" class="btn alt" id="back">↑ Edit budget &amp; cameras</button>
 </details>
+<footer>
+  <div>Made with ❤️ by Sourabh · © 2026 · <a href="https://sourabhkumarsingh-portfolio.lovable.app/" target="_blank" rel="noopener noreferrer">Portfolio</a></div>
+  <details>
+    <summary>What data is captured?</summary>
+    <p>This site has no accounts, tracking or analytics, and nothing you enter is sent to a server. Your budget, camera choices, prices and floor plan are saved only in your own browser and can be cleared by clearing site data. The 3D view uses your phone’s camera and motion sensors to show AR on your device; the camera view is not uploaded. The 3D page loads a code library from the jsDelivr CDN, and your hosting provider may keep standard server logs such as your IP address.</p>
+  </details>
+</footer>
 </main>
 
 <script>
