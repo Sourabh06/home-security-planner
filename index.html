@@ -79,42 +79,69 @@ footer details p{font-size:.82rem;margin-top:6px}
 </svg>
 <p style="color:var(--tx2);font-size:.95rem;margin-bottom:12px">Plan a home CCTV setup. See the coverage on a 2D floor plan or in 3D on your own wall. Set a budget and mix camera types to get an approximate cost.</p>
 <button type="button" class="btn alt" id="primerBtn" aria-expanded="false" aria-controls="primer">Know your camera</button>
-<div class="card" id="primer" hidden>
-  <h3>Camera types</h3>
-  <ul>
-    <li><b>Dome:</b> ceiling mount, discreet, wide view. Suits a living room or foyer.</li>
-    <li><b>Bullet:</b> long, narrow view and easy to spot, which deters people. Suits a balcony or outdoor wall.</li>
-    <li><b>Turret:</b> compact with a wide view. Suits a door or corridor.</li>
-    <li><b>Pan-tilt cube:</b> an indoor camera that rotates to follow movement. It is not part of this planner.</li>
-  </ul>
-  <h3>DVR vs NVR</h3>
-  <div class="wrap"><table>
-    <tr><th></th><th>DVR (HD camera)</th><th>NVR (IP camera)</th></tr>
-    <tr><td><b>How video travels</b></td><td>Analog HD signal over cable to the recorder, which records it</td><td>Digital video over a network cable (CAT 6) to the recorder</td></tr>
-    <tr><td><b>Power</b></td><td>Cable with video and power (3+1) or a separate power supply</td><td>Usually PoE: one cable carries data and power</td></tr>
-    <tr><td><b>In this planner</b></td><td>2 MP cameras, 4-channel DVR, up to 4 cameras</td><td>4 MP cameras, 8-channel NVR with PoE switch, up to 7 cameras</td></tr>
-    <tr><td><b>Trade-off</b></td><td>Lower cost, lower resolution</td><td>Sharper video, easier to expand, higher cost</td></tr>
-  </table></div>
-  <h3>Connection type</h3>
-  <ul>
-    <li><b>Wired (analog):</b> cable to a DVR. Reliable, but cable has to be run.</li>
-    <li><b>Wired (PoE):</b> one network cable to an NVR or switch gives power and video.</li>
-    <li><b>Wireless (WiFi):</b> easy to fit but still needs power, and depends on signal strength.</li>
-    <li><b>Battery:</b> no wiring at all, but the battery needs recharging.</li>
-    <li>This planner has price lists for wired setups only. For WiFi and battery, enter your own camera prices under "Edit price list".</li>
-  </ul>
-  <h3>Terms you will see</h3>
-  <ul>
-    <li><b>MP (megapixels):</b> picture sharpness. Higher means more detail.</li>
-    <li><b>IR / night vision:</b> infrared lights that let the camera see in the dark.</li>
-    <li><b>Channel:</b> one camera input on a recorder. A 4-channel DVR takes 4 cameras.</li>
-    <li><b>HDD / SSD:</b> the storage that keeps recordings.</li>
-    <li><b>PoE switch:</b> a network switch that powers cameras through their network cable.</li>
-    <li><b>Cable run:</b> the cable length from the recorder to a camera.</li>
-    <li><b>Junction box and conduit:</b> a box that protects cable joints, and a pipe that protects the cable.</li>
-    <li><b>Indoor / outdoor:</b> in the 2D plan, dome and turret are treated as indoor and bullet as outdoor.</li>
-  </ul>
+<div class="card" id="primer" hidden></div>
+<template id="primerTpl">
+<style>
+.ig{font-size:.88rem;line-height:1.45;color:var(--tx2)}
+.ig h3{font-size:1rem;color:var(--tx);margin:20px 0 8px;display:flex;gap:8px;align-items:center}
+.ig h3:first-child{margin-top:0}
+.ig h3 i{font-style:normal;display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#fff;font-size:.8rem}
+.ig b{color:var(--tx)}
+.ig-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.ig-c,.ig-lane{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:10px}
+.ig-c svg{width:58px;height:34px;display:block;margin-bottom:4px;color:var(--tx)}
+.ig-c svg *{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.ig-c svg .f{fill:currentColor;stroke:none}
+.ig-c>b{display:block}
+.ig-p{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--acbg);color:var(--ac);margin:6px 4px 0 0}
+.ig-lane{margin-bottom:8px}
+.ig-f{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+.ig-n{padding:6px 9px;border-radius:8px;border:1px solid var(--bd2);background:var(--s1);color:var(--tx);font-size:.8rem;text-align:center}
+.ig-a{font-size:.68rem;color:var(--mut);text-align:center;line-height:1.1}
+.ig-t{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 12px}
+.ig-t div{padding:6px 0;border-bottom:1px solid var(--bd)}
+.ig-tip{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--acbg);color:var(--tx)}
+</style>
+<div class="ig">
+  <h3><i>1</i>Which camera goes where?</h3>
+  <div class="ig-g">
+    <div class="ig-c"><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="4" width="42" height="5" rx="2"/><path class="f" d="M15 9h28a14 14 0 0 1-28 0z"/></svg><b>Dome</b>Round and low-profile, fixed to a ceiling. Hard to tell where it is pointing.<br><span class="ig-p">Indoor</span><span class="ig-p">Living room, foyer</span></div>
+    <div class="ig-c"><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="4" y="2" width="4" height="30" rx="2"/><path d="M8 17h8"/><rect x="16" y="9" width="38" height="16" rx="8"/><circle class="f" cx="46" cy="17" r="5"/></svg><b>Bullet</b>Long tube that sees far in a narrow strip. Easy to spot, which puts people off.<br><span class="ig-p">Outdoor</span><span class="ig-p">Balcony, outer wall</span></div>
+    <div class="ig-c"><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="3" width="42" height="4" rx="2"/><rect x="13" y="7" width="32" height="8" rx="4"/><path class="f" d="M21 15h16a8 8 0 0 1-16 0z"/></svg><b>Turret</b>Small ball-shaped camera with a wide view, mounted on a wall or ceiling.<br><span class="ig-p">Indoor</span><span class="ig-p">Door, corridor</span></div>
+  </div>
+
+  <h3><i>2</i>How does the picture reach the recorder?</h3>
+  <div class="ig-lane"><b>DVR: the "one cable per camera" way</b>
+    <div class="ig-f"><span class="ig-n">Camera</span><span class="ig-a">cable<br>→</span><span class="ig-n">DVR box<br>saves the video</span><span class="ig-a">→</span><span class="ig-n">TV or phone</span></div>
+    <span class="ig-p">Lower cost</span><span class="ig-p">Good picture (2 MP)</span><span class="ig-p">Up to 4 cameras here</span></div>
+  <div class="ig-lane"><b>NVR: the "home internet" way</b>
+    <div class="ig-f"><span class="ig-n">Camera</span><span class="ig-a">network cable<br>(also powers it)<br>→</span><span class="ig-n">Network box<br>(PoE switch)</span><span class="ig-a">→</span><span class="ig-n">NVR box<br>saves the video</span><span class="ig-a">→</span><span class="ig-n">TV or phone</span></div>
+    <span class="ig-p">Costs more</span><span class="ig-p">Sharper picture (4 MP)</span><span class="ig-p">Up to 7 cameras here</span></div>
+  <div class="ig-tip"><b>Quick rule:</b> tight budget, a few cameras → DVR. Sharper picture and room to add more later → NVR.</div>
+
+  <h3><i>3</i>How does the camera get power and connect?</h3>
+  <div class="ig-g">
+    <div class="ig-c"><b>Wired cable</b>A cable runs from each camera to the recorder.<br><span class="ig-p">Very steady</span><span class="ig-p">Cable must be laid</span></div>
+    <div class="ig-c"><b>PoE cable</b>One network cable carries the picture and the power.<br><span class="ig-p">Neat, one cable</span></div>
+    <div class="ig-c"><b>WiFi camera</b>Sends the picture through your WiFi, but still needs a power socket nearby.<br><span class="ig-p">Weak signal = patchy video</span></div>
+    <div class="ig-c"><b>Battery camera</b>No wires at all. You recharge it, and it often saves short clips instead of recording non-stop.<br><span class="ig-p">Easy to place</span></div>
+  </div>
+  <p style="margin-top:8px">This planner has prices for wired cameras only. For WiFi and battery, type your own price under "Edit price list".</p>
+
+  <h3><i>4</i>Words you will see in the form</h3>
+  <div class="ig-t">
+    <div><b>MP (megapixels)</b><br>How sharp the picture is. More MP shows faces and details more clearly.</div>
+    <div><b>IR / night vision</b><br>Invisible lights let the camera see in the dark. The picture turns black and white.</div>
+    <div><b>Audio</b><br>A built-in microphone, so the camera records sound too.</div>
+    <div><b>Channel</b><br>One camera socket on the recorder. A 4-channel DVR takes 4 cameras.</div>
+    <div><b>HDD / SSD</b><br>The memory that stores recordings. More space keeps more days of video.</div>
+    <div><b>PoE switch</b><br>A box that hands out network cables and power to the cameras.</div>
+    <div><b>Cable run</b><br>The length of cable from the recorder to the camera.</div>
+    <div><b>Junction box and conduit</b><br>A small box that protects cable joints, and a pipe that protects the cable.</div>
+    <div><b>Indoor / outdoor</b><br>Outdoor cameras are built for rain and dust. In the 2D plan, bullets count as outdoor.</div>
+  </div>
 </div>
+</template>
 
 <details class="sec" id="s2"><summary>Visualize</summary>
   <div class="vis">
@@ -333,7 +360,7 @@ $('s2').addEventListener('toggle',function(){
 });
 $('toVis').onclick=function(){$('s1').open=false;$('s2').open=true;$('s2').scrollIntoView({behavior:'smooth'});};
 $('back').onclick=function(){$('s1').open=true;$('s1').scrollIntoView({behavior:'smooth'});};
-$('primerBtn').onclick=function(){var p=$('primer'),o=p.hidden;p.hidden=!o;this.setAttribute('aria-expanded',o?'true':'false');this.textContent=o?'Hide camera guide':'Know your camera';};
+$('primerBtn').onclick=function(){var p=$('primer'),o=p.hidden;if(o&&!p.firstChild)p.appendChild($('primerTpl').content.cloneNode(true));p.hidden=!o;this.setAttribute('aria-expanded',o?'true':'false');this.textContent=o?'Hide camera guide':'Know your camera';};
 $('v2d').onclick=function(){$('frame').scrollIntoView({behavior:'smooth'});};
 opts();render();
 })();
