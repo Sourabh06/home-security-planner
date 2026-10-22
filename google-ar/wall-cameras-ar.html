@@ -12,14 +12,18 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
     font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; }
-  #start { height: 100%; display: flex; flex-direction: column; justify-content: center;
-    padding: 28px; max-width: 520px; margin: 0 auto; gap: 16px; }
+  #start { height: 100%; display: flex; flex-direction: column; justify-content: center; justify-content: safe center;
+    padding: 28px; max-width: 520px; margin: 0 auto; gap: 16px; overflow-y: auto; }
   #start h1 { font-size: 2rem; line-height: 1.15; margin: 0; letter-spacing: -.01em; }
   #start p { margin: 0; color: var(--muted); line-height: 1.5; }
   #startBtn { padding: 16px; font-size: 1.05rem; font-weight: 700; border: 0; border-radius: 10px;
-    background: var(--accent); color: #05201f; }
+    background: var(--accent); color: #05201f; flex: none; }
   #startBtn[disabled] { background: #2a343c; color: var(--muted); }
   #msg { color: var(--danger); min-height: 1.4em; font-size: .92rem; }
+  #walk { margin: 0; flex: none; }
+  #walk img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); background: #1b232a; }
+  #walk ol { margin: 10px 0 0; padding-left: 20px; color: var(--muted); font-size: .88rem; line-height: 1.5; }
+  #walk li b { color: var(--ink); font-weight: 600; }
   canvas { display: block; }
   html.ar, html.ar body { background: transparent; }
 
@@ -56,9 +60,17 @@
 <div id="start">
   <h1>Wall cameras in AR</h1>
   <p>Point your phone at a wall and tap to mount a camera. The translucent beam shows the area each camera can see. Adjust the view angle, range and color per camera.</p>
+  <figure id="walk">
+    <img src="ar-walkthrough.gif" width="480" height="300" alt="Animated walkthrough: move the phone until the ring on the wall turns teal, tap to mount a camera, then tap the camera to adjust pan, tilt and view angle.">
+    <ol>
+      <li><b>Scan:</b> move the phone slowly and aim at a wall until the ring turns teal. Orange means a floor or ceiling.</li>
+      <li><b>Mount:</b> tap to place a camera. For a high or plain wall, tap Lock wall first.</li>
+      <li><b>Adjust:</b> tap the camera, then change pan, tilt, view angle, range and color.</li>
+    </ol>
+  </figure>
   <button id="startBtn" disabled>Checking AR support…</button>
   <div id="msg" role="status"></div>
-  <p>Needs Android Chrome with Google Play Services for AR, served over HTTPS.</p>
+  <p>Needs Android Chrome with Google Play Services for AR.</p>
 </div>
 
 <div id="overlay">

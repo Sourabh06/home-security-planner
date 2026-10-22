@@ -60,12 +60,61 @@ footer a{color:var(--ac)}
 footer details{text-align:left;margin-top:10px}
 footer details summary{justify-content:center;font-weight:600;font-size:.85rem;min-height:40px}
 footer details p{font-size:.82rem;margin-top:6px}
+#hero{display:block;width:100%;max-width:420px;height:auto;margin:4px auto 10px;color:var(--tx)}
+#hero *{stroke:currentColor;fill:none;stroke-width:1.6;stroke-linejoin:round}#hero .f{fill:currentColor;stroke:none}#hero .b{fill:var(--s2)}#hero text{fill:var(--tx2);stroke:none;font-size:11px;font-family:inherit}
+#primer{margin-bottom:12px;font-size:.88rem;line-height:1.5}
+#primer h3{font-size:.95rem;margin:14px 0 6px}#primer h3:first-child{margin-top:0}
+#primer p,#primer li{color:var(--tx2)}#primer ul{margin:4px 0 0 18px}#primer li{margin:3px 0}#primer b{color:var(--tx)}
+#primer th,#primer td{text-align:left;vertical-align:top;padding:6px 6px 6px 0}
+#primerBtn{margin-top:0;margin-bottom:12px}
 </style>
 </head>
 <body>
 <main>
 <h1>Camera planner</h1>
-<p style="color:var(--tx2);font-size:.92rem;margin-bottom:14px">Choose an option to open it.</p>
+<svg id="hero" viewBox="0 0 360 100" role="img" aria-label="Illustration of a dome, a bullet and a turret security camera">
+  <g><rect class="b" x="30" y="14" width="60" height="7" rx="3"/><path class="f" d="M38 21h44a22 22 0 0 1-44 0z"/><text x="60" y="88" text-anchor="middle">Dome</text></g>
+  <g><rect class="b" x="132" y="10" width="7" height="56" rx="3"/><path d="M139 38h12"/><rect class="b" x="151" y="26" width="64" height="26" rx="12"/><circle class="f" cx="203" cy="39" r="8"/><text x="175" y="88" text-anchor="middle">Bullet</text></g>
+  <g><rect class="b" x="260" y="14" width="70" height="7" rx="3"/><rect class="b" x="268" y="21" width="54" height="13" rx="6"/><path class="f" d="M278 34h34a17 17 0 0 1-34 0z"/><text x="295" y="88" text-anchor="middle">Turret</text></g>
+</svg>
+<p style="color:var(--tx2);font-size:.95rem;margin-bottom:12px">Plan a home CCTV setup. Set a budget and mix camera types to get an approximate cost, then see the coverage on a 2D floor plan or in 3D on your own wall.</p>
+<button type="button" class="btn alt" id="primerBtn" aria-expanded="false" aria-controls="primer">Know your camera</button>
+<div class="card" id="primer" hidden>
+  <h3>Camera types</h3>
+  <ul>
+    <li><b>Dome:</b> ceiling mount, discreet, wide view. Suits a living room or foyer.</li>
+    <li><b>Bullet:</b> long, narrow view and easy to spot, which deters people. Suits a balcony or outdoor wall.</li>
+    <li><b>Turret:</b> compact with a wide view. Suits a door or corridor.</li>
+    <li><b>Pan-tilt cube:</b> an indoor camera that rotates to follow movement. It is not part of this planner.</li>
+  </ul>
+  <h3>DVR vs NVR</h3>
+  <div class="wrap"><table>
+    <tr><th></th><th>DVR (HD camera)</th><th>NVR (IP camera)</th></tr>
+    <tr><td><b>How video travels</b></td><td>Analog HD signal over cable to the recorder, which records it</td><td>Digital video over a network cable (CAT 6) to the recorder</td></tr>
+    <tr><td><b>Power</b></td><td>Cable with video and power (3+1) or a separate power supply</td><td>Usually PoE: one cable carries data and power</td></tr>
+    <tr><td><b>In this planner</b></td><td>2 MP cameras, 4-channel DVR, up to 4 cameras</td><td>4 MP cameras, 8-channel NVR with PoE switch, up to 7 cameras</td></tr>
+    <tr><td><b>Trade-off</b></td><td>Lower cost, lower resolution</td><td>Sharper video, easier to expand, higher cost</td></tr>
+  </table></div>
+  <h3>Connection type</h3>
+  <ul>
+    <li><b>Wired (analog):</b> cable to a DVR. Reliable, but cable has to be run.</li>
+    <li><b>Wired (PoE):</b> one network cable to an NVR or switch gives power and video.</li>
+    <li><b>Wireless (WiFi):</b> easy to fit but still needs power, and depends on signal strength.</li>
+    <li><b>Battery:</b> no wiring at all, but the battery needs recharging.</li>
+    <li>This planner has price lists for wired setups only. For WiFi and battery, enter your own camera prices under "Edit price list".</li>
+  </ul>
+  <h3>Terms you will see</h3>
+  <ul>
+    <li><b>MP (megapixels):</b> picture sharpness. Higher means more detail.</li>
+    <li><b>IR / night vision:</b> infrared lights that let the camera see in the dark.</li>
+    <li><b>Channel:</b> one camera input on a recorder. A 4-channel DVR takes 4 cameras.</li>
+    <li><b>HDD / SSD:</b> the storage that keeps recordings.</li>
+    <li><b>PoE switch:</b> a network switch that powers cameras through their network cable.</li>
+    <li><b>Cable run:</b> the cable length from the recorder to a camera.</li>
+    <li><b>Junction box and conduit:</b> a box that protects cable joints, and a pipe that protects the cable.</li>
+    <li><b>Indoor / outdoor:</b> in the 2D plan, dome and turret are treated as indoor and bullet as outdoor.</li>
+  </ul>
+</div>
 
 <details class="sec" id="s1"><summary>Budget &amp; cameras</summary>
   <div class="card">
@@ -283,6 +332,7 @@ $('s2').addEventListener('toggle',function(){
 });
 $('toVis').onclick=function(){$('s1').open=false;$('s2').open=true;$('s2').scrollIntoView({behavior:'smooth'});};
 $('back').onclick=function(){$('s1').open=true;$('s1').scrollIntoView({behavior:'smooth'});};
+$('primerBtn').onclick=function(){var p=$('primer'),o=p.hidden;p.hidden=!o;this.setAttribute('aria-expanded',o?'true':'false');this.textContent=o?'Hide camera guide':'Know your camera';};
 $('v2d').onclick=function(){$('frame').scrollIntoView({behavior:'smooth'});};
 opts();render();
 })();

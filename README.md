@@ -7,6 +7,7 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
 - **Budget & cameras:** budget slider and text input; choose HD camera + DVR or IP camera + NVR; wired, WiFi or battery; add dome, bullet and turret cameras in any mix. The cost table updates live and stops you adding cameras that would exceed the budget or the recorder limit (4 for DVR, 7 for NVR).
 - **Visualize (2D):** the floor-plan coverage tool is embedded in the main page. Draw walls, place indoor and outdoor cameras and see their coverage cones.
 - **Visualize (3D):** opens the WebXR page, where you mount cameras on a real wall through your phone camera.
+- **Know your camera:** a collapsed primer explaining camera types, DVR vs NVR, connection types and the terms used in the form.
 - The cost estimate is optional. You can go straight to Visualize.
 
 ## Files
@@ -15,7 +16,8 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
 | --- | --- |
 | `index.html` | Main page: budget, camera cart, cost estimate, embedded 2D plan, footer |
 | `flat_camera_coverage_floor_plan.html` | 2D floor plan and coverage tool (loaded inside `index.html`) |
-| `google AR/wall-cameras-ar.html` | 3D AR wall-camera tool (opened as a separate page) |
+| `google-ar/wall-cameras-ar.html` | 3D AR wall-camera tool (opened as a separate page) |
+| `google-ar/ar-walkthrough.gif` | Walkthrough animation shown on the 3D start screen (replace it with your own recording if you like) |
 | `.gitignore` | Ignores `*.json`, such as downloaded plan files |
 
 Keep this folder layout, because `index.html` links to the other two files by relative path.
