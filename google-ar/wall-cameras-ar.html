@@ -20,10 +20,15 @@
     background: var(--accent); color: #05201f; flex: none; }
   #startBtn[disabled] { background: #2a343c; color: var(--muted); }
   #msg { color: var(--danger); min-height: 1.4em; font-size: .92rem; }
-  #walk { margin: 0; flex: none; }
-  #walk img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); background: #1b232a; }
-  #walk ol { margin: 10px 0 0; padding-left: 20px; color: var(--muted); font-size: .88rem; line-height: 1.5; }
-  #walk li b { color: var(--ink); font-weight: 600; }
+  [hidden] { display: none !important; }
+  #walkBtn { padding: 14px; font-size: 1rem; font-weight: 600; border-radius: 10px; border: 1px solid var(--line);
+    background: #1b232a; color: var(--ink); flex: none; }
+  #walkPanel { display: flex; flex-direction: column; gap: 16px; flex: none; }
+  figure.walk { margin: 0; flex: none; }
+  .walk h2 { margin: 0 0 8px; font-size: 1rem; }
+  figure.walk img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); background: #1b232a; }
+  figure.walk ol { margin: 10px 0 0; padding-left: 20px; color: var(--muted); font-size: .88rem; line-height: 1.5; }
+  figure.walk li b { color: var(--ink); font-weight: 600; }
   canvas { display: block; }
   html.ar, html.ar body { background: transparent; }
 
@@ -60,8 +65,8 @@
 <div id="start">
   <h1>Wall cameras in AR</h1>
   <p>Point your phone at a wall and tap to mount a camera. The translucent beam shows the area each camera can see. Adjust the view angle, range and color per camera.</p>
-  <figure id="walk">
-    <img src="ar-walkthrough.gif" width="480" height="300" alt="Animated walkthrough: move the phone until the ring on the wall turns teal, tap to mount a camera, then tap the camera to adjust pan, tilt and view angle.">
+    <figure class="walk">
+    <img src="ar-intro.gif" width="480" height="300" alt="Animated walkthrough: move the phone until the ring on the wall turns teal, tap to mount a camera, then tap the camera to adjust pan, tilt and view angle.">
     <ol>
       <li><b>Scan:</b> move the phone slowly and aim at a wall until the ring turns teal. Orange means a floor or ceiling.</li>
       <li><b>Mount:</b> tap to place a camera. For a high or plain wall, tap Lock wall first.</li>
@@ -71,6 +76,29 @@
   <button id="startBtn" disabled>Checking AR support…</button>
   <div id="msg" role="status"></div>
   <p>Needs Android Chrome with Google Play Services for AR.</p>
+  <button id="walkBtn" type="button" aria-expanded="false" aria-controls="walkPanel">Walkthrough</button>
+  <div id="walkPanel" hidden>
+  <figure class="walk">
+    <h2>How to place and aim a camera</h2>
+    <img loading="lazy" src="ar-walkthrough.gif" width="480" height="300" alt="Animated walkthrough: move the phone until the ring on the wall turns teal, tap to mount a camera, then see how pan turns the beam left and right, tilt moves it up and down, and view angle makes it wider or narrower.">
+    <ol>
+      <li><b>Scan:</b> move the phone slowly and aim at a wall until the ring turns teal. Orange means a floor or ceiling.</li>
+      <li><b>Mount:</b> tap to place a camera. For a high or plain wall, tap Lock wall first. Tap a camera to select it.</li>
+      <li><b>Pan:</b> turns the camera left or right, like shaking your head.</li>
+      <li><b>Tilt:</b> points the camera up or down, like nodding.</li>
+      <li><b>View angle:</b> how wide the camera sees. A small angle is a narrow zoomed view, a large angle is a wide view.</li>
+    </ol>
+  </figure>
+  <figure class="walk">
+    <h2>Change how the beam looks</h2>
+    <img loading="lazy" src="ar-style.gif" width="480" height="300" alt="Animated guide: the Range slider makes the beam longer or shorter in metres, Opacity makes it more or less see-through, and Color changes its color.">
+    <ol>
+      <li><b>Range:</b> how far the camera sees, from 0.5 to 8 metres.</li>
+      <li><b>Opacity:</b> how see-through the beam is. Lower it to see objects behind the beam.</li>
+      <li><b>Color:</b> the beam color, handy for telling cameras apart.</li>
+    </ol>
+  </figure>
+  </div>
 </div>
 
 <div id="overlay">
@@ -475,6 +503,15 @@ window.addEventListener('resize', () => {
   startBtn.addEventListener('click', startAR);
   syncUI();
 })();
+</script>
+<script>
+document.getElementById('walkBtn').addEventListener('click', function () {
+  var p = document.getElementById('walkPanel'), opening = p.hidden;
+  p.hidden = !opening;
+  this.setAttribute('aria-expanded', opening ? 'true' : 'false');
+  this.textContent = opening ? 'Hide walkthrough' : 'Walkthrough';
+  if (opening) p.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 </script>
 </body>
 </html>

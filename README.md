@@ -2,6 +2,8 @@
 
 A static website for planning a home CCTV setup: set a budget, mix camera types, get an approximate cost, then visualize coverage in 2D or in AR.
 
+![Animated walkthrough of the 3D AR page: scan a wall until the ring turns teal, tap to mount a camera, then adjust it](google-ar/ar-intro.gif)
+
 ## Features
 
 - **Budget & cameras:** budget slider and text input; choose HD camera + DVR or IP camera + NVR; wired, WiFi or battery; add dome, bullet and turret cameras in any mix. The cost table updates live and stops you adding cameras that would exceed the budget or the recorder limit (4 for DVR, 7 for NVR).
@@ -17,7 +19,9 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
 | `index.html` | Main page: budget, camera cart, cost estimate, embedded 2D plan, footer |
 | `flat_camera_coverage_floor_plan.html` | 2D floor plan and coverage tool (loaded inside `index.html`) |
 | `google-ar/wall-cameras-ar.html` | 3D AR wall-camera tool (opened as a separate page) |
-| `google-ar/ar-walkthrough.gif` | Walkthrough animation shown on the 3D start screen (replace it with your own recording if you like) |
+| `google-ar/ar-intro.gif` | 3D start screen animation above the Start AR button: scan, mount, adjust (replace any of the GIFs with your own recording if you like) |
+| `google-ar/ar-walkthrough.gif` | Shown in the 3D page's Walkthrough panel: scan, mount, and what pan, tilt and view angle mean |
+| `google-ar/ar-style.gif` | Shown in the 3D page's Walkthrough panel: range, opacity and color |
 | `.gitignore` | Ignores `*.json`, such as downloaded plan files |
 
 Keep this folder layout, because `index.html` links to the other two files by relative path.
