@@ -9,7 +9,8 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
 - **Budget & cameras:** budget slider and text input; choose HD camera + DVR or IP camera + NVR; wired, WiFi or battery; add dome, bullet and turret cameras in any mix. The cost table updates live and stops you adding cameras that would exceed the budget or the recorder limit (4 for DVR, 7 for NVR).
 - **Visualize (2D):** the floor-plan coverage tool is embedded in the main page. Draw walls, place indoor and outdoor cameras and see their coverage cones.
 - **Visualize (3D):** opens the WebXR page, where you mount cameras on a real wall through your phone camera.
-- **Know your camera:** a collapsed primer explaining camera types, DVR vs NVR, connection types and the terms used in the form.
+- **Know your camera:** a collapsed, plain-language infographic explaining camera types (including indoor and PTZ), DVR vs NVR, connection types and the terms used in the form. It is built from plain HTML and CSS and only added to the page when opened, so it does not slow the page load.
+- **Additional information:** a separate page (`additional-info.html`) with IP and IK ratings, India's STQC rule, STQC-certified brands, storage sizing, alarms and image recognition, privacy and safety, and DORI with a calculator link.
 - The cost estimate is optional. You can go straight to Visualize.
 
 ## Files
@@ -17,6 +18,7 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
 | File | Purpose |
 | --- | --- |
 | `index.html` | Main page: budget, camera cart, cost estimate, embedded 2D plan, footer |
+| `additional-info.html` | Extra buying and setup information, opened from the "Know your camera" guide |
 | `flat_camera_coverage_floor_plan.html` | 2D floor plan and coverage tool (loaded inside `index.html`) |
 | `google-ar/wall-cameras-ar.html` | 3D AR wall-camera tool (opened as a separate page) |
 | `google-ar/ar-intro.gif` | 3D start screen animation above the Start AR button: scan, mount, adjust (replace any of the GIFs with your own recording if you like) |
@@ -24,7 +26,7 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
 | `google-ar/ar-style.gif` | Shown in the 3D page's Walkthrough panel: range, opacity and color |
 | `.gitignore` | Ignores `*.json`, such as downloaded plan files |
 
-Keep this folder layout, because `index.html` links to the other two files by relative path.
+Keep this folder layout, because `index.html` links to the other pages by relative path.
 
 ## Run locally
 

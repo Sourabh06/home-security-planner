@@ -42,7 +42,7 @@ th{color:var(--mut);font-weight:500;font-size:.78rem}tr.tot td{font-weight:700;b
 .bar.over i{background:var(--bad)}
 .msg{font-size:.85rem;padding:10px 12px;border-radius:8px;border:1px solid var(--bd2);background:var(--s2);margin:8px 0;color:var(--tx2)}
 .msg.bad{border-color:var(--bad);color:var(--bad)}
-ul.notes{margin:6px 0 0 18px;font-size:.82rem;color:var(--tx2)}ul.notes li{margin:3px 0}
+ul.notes{margin:6px 0 0 18px;font-size:.82rem;color:var(--tx2)}ul.notes li{margin:3px 0}ul.notes a{color:var(--ac)}
 details summary{cursor:pointer;font-weight:600;font-size:.9rem;min-height:36px;display:flex;align-items:center}
 .pgrid{display:grid;grid-template-columns:1fr 110px;gap:6px 10px;align-items:center;font-size:.85rem;margin-top:8px}.pgrid input{min-height:38px;font-size:15px}
 .btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-size:1rem;font-weight:600;cursor:pointer;text-decoration:none;margin-top:10px}
@@ -100,6 +100,7 @@ footer details p{font-size:.82rem;margin-top:6px}
 .ig-a{font-size:.68rem;color:var(--mut);text-align:center;line-height:1.1}
 .ig-t{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 12px}
 .ig-t div{padding:6px 0;border-bottom:1px solid var(--bd)}
+.ig-go{display:flex;align-items:center;min-height:48px;margin-top:20px;padding:12px;border:1px solid var(--bd2);border-radius:10px;background:var(--s1);color:var(--ac);font-weight:700;text-decoration:none}
 .ig-tip{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--acbg);color:var(--tx)}
 </style>
 <div class="ig">
@@ -108,6 +109,8 @@ footer details p{font-size:.82rem;margin-top:6px}
     <div class="ig-c"><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="4" width="42" height="5" rx="2"/><path class="f" d="M15 9h28a14 14 0 0 1-28 0z"/></svg><b>Dome</b>Round and low-profile, fixed to a ceiling. Hard to tell where it is pointing.<br><span class="ig-p">Indoor</span><span class="ig-p">Living room, foyer</span></div>
     <div class="ig-c"><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="4" y="2" width="4" height="30" rx="2"/><path d="M8 17h8"/><rect x="16" y="9" width="38" height="16" rx="8"/><circle class="f" cx="46" cy="17" r="5"/></svg><b>Bullet</b>Long tube that sees far in a narrow strip. Easy to spot, which puts people off.<br><span class="ig-p">Outdoor</span><span class="ig-p">Balcony, outer wall</span></div>
     <div class="ig-c"><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="3" width="42" height="4" rx="2"/><rect x="13" y="7" width="32" height="8" rx="4"/><path class="f" d="M21 15h16a8 8 0 0 1-16 0z"/></svg><b>Turret</b>Small ball-shaped camera with a wide view, mounted on a wall or ceiling.<br><span class="ig-p">Indoor</span><span class="ig-p">Door, corridor</span></div>
+    <div class="ig-c"><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="9" y="4" width="40" height="22" rx="7"/><circle class="f" cx="29" cy="15" r="6"/><path d="M18 30h22"/></svg><b>Indoor camera</b>Small cube that sits on a shelf or table, or hangs on a wall. Many models turn to follow movement.<br><span class="ig-p">Indoor</span><span class="ig-p">Rooms, nursery</span><span class="ig-p">Not priced here</span></div>
+    <div class="ig-c"><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="3" width="42" height="4" rx="2"/><path d="M29 7v5"/><circle cx="29" cy="20" r="9"/><circle class="f" cx="29" cy="20" r="4"/><path d="M12 22a17 8 0 0 0 4 4M46 22a17 8 0 0 1-4 4"/></svg><b>PTZ (Pan-Tilt-Zoom)</b>A motor turns it left and right, tips it up and down, and zooms in. You steer it from a phone, or it follows movement by itself. One PTZ can watch a big area. PTZ can also be a feature of other cameras: many dome and indoor models have pan-tilt, and some have zoom, built in.<br><span class="ig-p">Big areas</span><span class="ig-p">Costs more</span><span class="ig-p">Not priced here</span></div>
   </div>
 
   <h3><i>2</i>How does the picture reach the recorder?</h3>
@@ -138,8 +141,10 @@ footer details p{font-size:.82rem;margin-top:6px}
     <div><b>PoE switch</b><br>A box that hands out network cables and power to the cameras.</div>
     <div><b>Cable run</b><br>The length of cable from the recorder to the camera.</div>
     <div><b>Junction box and conduit</b><br>A small box that protects cable joints, and a pipe that protects the cable.</div>
+    <div><b>PTZ</b><br>Pan-Tilt-Zoom: a motor that turns, tips and zooms the camera. Some dome and indoor cameras offer it as a feature.</div>
     <div><b>Indoor / outdoor</b><br>Outdoor cameras are built for rain and dust. In the 2D plan, bullets count as outdoor.</div>
   </div>
+  <a class="ig-go" href="additional-info.html">Additional information →</a>
 </div>
 </template>
 
@@ -148,9 +153,8 @@ footer details p{font-size:.82rem;margin-top:6px}
     <button type="button" id="v2d" aria-pressed="true">2D plan</button>
     <a href="google-ar/wall-cameras-ar.html" id="l3d">3D (AR) ↗</a>
   </div>
-  <div class="card" id="sum"></div>
+  <div class="card" id="sum" hidden></div>
   <iframe id="frame" title="2D floor plan and coverage"></iframe>
-  <button type="button" class="btn alt" id="back">↑ Edit budget &amp; cameras</button>
 </details>
 
 <details class="sec" id="s1"><summary>Budget &amp; cameras</summary>
@@ -305,7 +309,7 @@ function render(){
 
   var N=[];
   if(k==='dvr'){N.push('DVR is 4-channel (max 4 cameras); one power supply is counted.','"2 V service wire" had no price, so it is not costed.','Bullet ₹1,850 and turret ₹1,800 are web estimates (see below), not quotes.','Connector set is per camera. ₹25/m and ₹40/m are two 3+1 options; 86 wire is ₹50/m.');}
-  else if(k==='nvr'){N.push('Max 7 cameras: the 8-port switch uses one port for the NVR (7608NXI-K1 has no built-in PoE).','No turret IP price was given, so only dome and bullet are offered.','Junction box is per camera; conduit units per camera are set above.');}
+  else if(k==='nvr'){N.push('<b>Check certification before buying:</b> the NVR prices are for Hikvision models. India requires new internet-connected cameras and recorders to be STQC-certified, so confirm the exact models are certified before you order. <a href="additional-info.html#stqc">More on STQC</a>');N.push('Max 7 cameras: the 8-port switch uses one port for the NVR (7608NXI-K1 has no built-in PoE).','No turret IP price was given, so only dome and bullet are offered.','Junction box is per camera; conduit units per camera are set above.');}
   else N.push('Wireless/battery estimates cover cameras only (no recorder, cable or installation).');
   N.push('All prices are approximate and exclude GST.');N.push('Indoor/outdoor split used in 2D: dome and turret indoor, bullet outdoor.');
   $('notes').innerHTML=N.map(function(t){return '<li>'+t+'</li>';}).join('');
@@ -336,9 +340,8 @@ function summary(){
   CAT[k].forEach(function(it){var q=S.carts[k][it.id]||0;if(!q)return;if(it.f==='bullet')out+=q;else ind+=q;t.push(q+' × '+it.n);});
   W={ind:ind,out:out,tot:ind+out};
   var cur=calc(k);
-  $('sum').innerHTML=W.tot
-   ?'<h2>Your cameras</h2><p style="font-size:.88rem">'+t.join(' · ')+'</p><p style="font-size:.88rem;color:var(--tx2);margin-top:4px">Approx. total '+inr(cur.total)+' (excl. GST) of '+inr(S.budget)+' budget. Place <b>'+ind+' indoor</b> and <b>'+out+' outdoor</b> in the plan.</p><p id="placed" style="font-size:.88rem;margin-top:4px"></p>'
-   :'<p style="font-size:.88rem;color:var(--tx2)">No cost estimate: place any cameras you like. Open "Budget &amp; cameras" above to add a budget and costs.</p><p id="placed" style="font-size:.88rem;margin-top:4px"></p>';
+  $('sum').hidden=!W.tot;
+  $('sum').innerHTML=W.tot?'<h2>Your cameras</h2><p style="font-size:.88rem">'+t.join(' · ')+'</p><p style="font-size:.88rem;color:var(--tx2);margin-top:4px">Approx. total '+inr(cur.total)+' (excl. GST) of '+inr(S.budget)+' budget. Place <b>'+ind+' indoor</b> and <b>'+out+' outdoor</b> in the plan.</p><p id="placed" style="font-size:.88rem;margin-top:4px"></p>':'';
 }
 function watch(){
   clearInterval(poll);
@@ -359,7 +362,6 @@ $('s2').addEventListener('toggle',function(){
   }else clearInterval(poll);
 });
 $('toVis').onclick=function(){$('s1').open=false;$('s2').open=true;$('s2').scrollIntoView({behavior:'smooth'});};
-$('back').onclick=function(){$('s1').open=true;$('s1').scrollIntoView({behavior:'smooth'});};
 $('primerBtn').onclick=function(){var p=$('primer'),o=p.hidden;if(o&&!p.firstChild)p.appendChild($('primerTpl').content.cloneNode(true));p.hidden=!o;this.setAttribute('aria-expanded',o?'true':'false');this.textContent=o?'Hide camera guide':'Know your camera';};
 $('v2d').onclick=function(){$('frame').scrollIntoView({behavior:'smooth'});};
 opts();render();
