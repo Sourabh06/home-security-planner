@@ -30,6 +30,7 @@ a{color:var(--ac)}
 table{width:100%;border-collapse:collapse;font-size:.85rem}
 th,td{padding:7px 4px;border-bottom:1px solid var(--bd);text-align:right}th:first-child,td:first-child{text-align:left}
 th{color:var(--mut);font-weight:500;font-size:.78rem}
+code{font-size:.85em;word-break:break-all}
 footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--bd2);font-size:.85rem;color:var(--tx2);text-align:center}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 </style>
@@ -39,7 +40,7 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--bd2);font-siz
 <a class="back" href="index.html">← Back to planner</a>
 <h1>Additional information</h1>
 <p class="lead">Extra details to help you choose, buy and set up cameras. All prices and figures are approximate.</p>
-<nav aria-label="On this page"><ul class="toc"><li><a href="#ratings">Tougher cameras: IP and IK ratings</a></li><li><a href="#stqc">Buying in India: look for STQC</a></li><li><a href="#brands">Brands reported as STQC-certified</a></li><li><a href="#storage">How much storage do I need?</a></li><li><a href="#battery">Battery cameras</a></li><li><a href="#simsd">SIM card and SD card options</a></li><li><a href="#alarms">Alarms and event detection</a></li><li><a href="#recognition">Image recognition (smart detection)</a></li><li><a href="#privacy">Privacy and safety concerns</a></li><li><a href="#dori">DORI: how clearly will the camera see?</a></li></ul></nav>
+<nav aria-label="On this page"><ul class="toc"><li><a href="#ratings">Tougher cameras: IP and IK ratings</a></li><li><a href="#stqc">Buying in India: look for STQC</a></li><li><a href="#brands">Brands reported as STQC-certified</a></li><li><a href="#storage">How much storage do I need?</a></li><li><a href="#h265">H.265+ encoding</a></li><li><a href="#battery">Battery cameras</a></li><li><a href="#simsd">SIM card and SD card options</a></li><li><a href="#remote">Watching on your phone or browser</a></li><li><a href="#onvif">ONVIF and RTSP</a></li><li><a href="#alarms">Alarms and event detection</a></li><li><a href="#recognition">Image recognition (smart detection)</a></li><li><a href="#privacy">Privacy and safety concerns</a></li><li><a href="#dori">DORI: how clearly will the camera see?</a></li></ul></nav>
 <div class="ig">
       <h2 id="ratings">Tougher cameras: IP and IK ratings</h2>
       <div class="ig-g">
@@ -55,6 +56,19 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--bd2);font-siz
       <h2 id="storage">How much storage do I need?</h2>
       <p>The size of the HDD or SSD depends on the number of cameras, the picture quality and how many days of video you want to keep. This planner uses the 500 GB (DVR) and 2 TB (NVR) drives from its price list, so use Hikvision's free tools to check that they are enough.</p>
       <p class="ig-l"><a href="https://hitools.hikvision.com/HiToolsDesigner/#/toolBox?site=en" target="_blank" rel="noopener noreferrer">Hikvision HiTools: storage (HDD size) calculator</a></p>
+      <h2 id="h265">H.265+ encoding</h2>
+      <p>Encoding (the codec) squeezes video so it takes less disk space and less network speed. A newer codec can give a smaller file at the same picture quality, so the same drive keeps more days of video.</p>
+      <div class="ig-g">
+        <div class="ig-c"><b>H.264</b>The older codec. It works with almost every camera, recorder, phone and computer.</div>
+        <div class="ig-c"><b>H.265 (HEVC)</b>Usually about 30 to 50 percent smaller files than H.264, depending on the scene and settings.</div>
+        <div class="ig-c"><b>H.265+</b>Hikvision's name for an enhanced H.265 that lowers the bitrate further, mainly when little is moving. Other brands have their own similar "smart" modes under different names.</div>
+      </div>
+      <ul>
+        <li><b>Both ends must support it:</b> the camera, the recorder and the phone or computer you watch on. Older recorders may only handle H.264.</li>
+        <li><b>Savings vary:</b> the biggest figures come from the makers' own tests. A busy scene saves less than a quiet one.</li>
+        <li><b>Playback:</b> H.265 needs more processing power to play, so an old computer may struggle.</li>
+        <li><b>Sizing storage:</b> the planner's prices don't say which codec your cameras use, so check the spec sheet and see if the storage calculator above lets you choose the codec.</li>
+      </ul>
       <h2 id="battery">Battery cameras</h2>
       <p>A battery camera has no power cable. You recharge it, or pair it with a small solar panel. It is not part of the cost estimate in this planner, so add its price yourself if you plan to use one.</p>
       <ul>
@@ -69,6 +83,18 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--bd2);font-siz
         <div class="ig-c"><b>SD card (microSD)</b>The camera saves video on a memory card inside it, so it can record without a DVR or NVR. The card is small and can be stolen with the camera. It is not priced here.</div>
         <div class="ig-c"><b>SIM card (4G)</b>The camera uses mobile data instead of WiFi or a network cable. It is useful where there is no broadband. You need a data plan, and it is not priced here.</div>
       </div>
+      <h2 id="remote">Watching on your phone or browser</h2>
+      <p>Most modern recorders and many cameras can show live video and playback in a mobile app or on a web page.</p>
+      <ul>
+        <li><b>Mobile app:</b> the maker's app for Android or iPhone gives live view, playback and alerts. You usually add the device by scanning a QR code on it.</li>
+        <li><b>Web interface:</b> type the device's address into a browser on the same network to watch video or change settings. Some older models need a particular browser or plug-in, so check the spec.</li>
+        <li><b>Away from home:</b> the device needs a working home internet connection. A maker's cloud service is the easy way, but your video passes through their servers. A VPN to your home network is more private but harder to set up.</li>
+        <li><b>Do not open the device to the internet:</b> avoid port forwarding. Change default passwords and keep the software updated (see privacy below).</li>
+        <li><b>Check before you buy:</b> confirm the app supports your exact model, and ask whether cloud storage or alerts need a paid plan.</li>
+      </ul>
+      <h2 id="onvif">ONVIF and RTSP</h2>
+      <p><b>ONVIF</b> is an open standard that lets cameras and recorders from different brands find each other and work together. If you may mix brands, look for ONVIF on both the camera and the recorder (Profile S, or Profile T for H.265). It helps, but it does not guarantee that every feature works.</p>
+      <p><b>RTSP</b> is the video stream address that a camera shares, so a recorder or a player such as VLC can pull its picture. It looks like <code>rtsp://camera-address:port/path</code>, and the path differs by brand. RTSP is often not encrypted and may carry the password in the address, so use it only on your home network and never open it to the internet.</p>
       <h2 id="alarms">Alarms and event detection</h2>
       <p>A camera can do more than record. It can raise an alert when something happens:</p>
       <ul>
