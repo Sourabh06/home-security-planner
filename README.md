@@ -6,11 +6,11 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
 
 ## Features
 
-- **Budget & cameras:** budget slider and text input; choose HD camera + DVR or IP camera + NVR; wired, WiFi or battery; add dome, bullet and turret cameras in any mix. The cost table updates live and stops you adding cameras that would exceed the budget or the recorder limit (4 for DVR, 7 for NVR).
+- **Cost estimation:** budget slider and text input; choose HD camera + DVR or IP camera + NVR; wired, or WiFi (IP cameras only); add dome, bullet and turret cameras in any mix. The cost table updates live and stops you adding cameras that would exceed the budget or the recorder limit (4 for DVR, 7 for NVR).
 - **Visualize (2D):** the floor-plan coverage tool is embedded in the main page. Draw walls, place indoor and outdoor cameras and see their coverage cones.
 - **Visualize (3D):** opens the WebXR page, where you mount cameras on a real wall through your phone camera.
-- **Know your camera:** a collapsed, plain-language infographic explaining camera types (including indoor and PTZ), DVR vs NVR, connection types and the terms used in the form. It is built from plain HTML and CSS and only added to the page when opened, so it does not slow the page load.
-- **Additional information:** a separate page (`additional-info.html`) with IP and IK ratings, India's STQC rule, STQC-certified brands, storage sizing, alarms and image recognition, privacy and safety, and DORI with a calculator link.
+- **Know your camera:** a collapsed, plain-language infographic where every point opens and closes with a chevron explaining camera types (including indoor and PTZ), DVR vs NVR, connection types and the terms used in the form. It is built from plain HTML and CSS and only added to the page when opened, so it does not slow the page load.
+- **Additional information:** a separate page (`additional-info.html`) with IP and IK ratings, India's STQC rule, STQC-certified brands, storage sizing, battery cameras, SIM and SD card options, alarms and image recognition, privacy and safety, and DORI with a calculator link.
 - The cost estimate is optional. You can go straight to Visualize.
 
 ## Files
@@ -44,7 +44,7 @@ Upload all files, with the same structure, to any static host that serves **HTTP
 
 ## Pricing
 
-All prices are approximate and exclude GST. Most come from the project owner's price list; the DVR bullet and turret prices are web estimates. Every price can be edited in the "Edit price list" section of the page.
+All prices are approximate and exclude GST. Most come from the project owner's price list; the DVR bullet and turret prices are web estimates. WiFi camera prices (3 MP dome ₹2,500, 2 MP IR bullet ₹2,800, 4 MP turret ₹4,500) were also supplied by the project owner. Every price can be edited in the "Edit price list" section of the page.
 
 ## Data and privacy
 
