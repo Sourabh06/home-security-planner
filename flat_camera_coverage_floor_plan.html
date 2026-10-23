@@ -205,6 +205,7 @@ input[type=range]::-moz-range-thumb{
     <button type="button" data-tool="aim" aria-pressed="false">Aim</button>
     <button type="button" data-tool="erase" aria-pressed="false">Erase</button>
     <button type="button" data-tool="pan" aria-pressed="false">Pan</button>
+    <button type="button" data-tool="suggest" aria-pressed="false">Suggest</button>
   </div>
   <div class="actions">
     <button type="button" id="btnUndo" disabled>Undo</button>
@@ -219,6 +220,13 @@ input[type=range]::-moz-range-thumb{
   <input type="file" id="fileIn" accept=".json,application/json" hidden>
   <p class="hint" id="status" aria-live="polite" style="min-height:0;color:var(--accent)"></p>
   <p class="hint" id="hint" aria-live="polite"></p>
+  <div id="sugbar" hidden>
+    <p class="hint" id="sugMsg" aria-live="polite" style="min-height:0"></p>
+    <div class="actions" style="grid-template-columns:repeat(2,1fr)">
+      <button type="button" id="sugPlace" disabled>Place all (0)</button>
+      <button type="button" id="sugClear" disabled>Clear marks</button>
+    </div>
+  </div>
   <div id="textbar" hidden>
     <input type="text" id="textInput" maxlength="40" placeholder="Type a label" autocomplete="off" aria-label="Label text">
     <button type="button" id="textAdd">Add</button>
@@ -234,10 +242,12 @@ input[type=range]::-moz-range-thumb{
     <g id="world">
       <rect x="0" y="0" width="520" height="520" fill="var(--surface-2)" stroke="var(--border-strong)" stroke-width="1.5"/>
       <rect x="-1" y="-1" width="522" height="522" fill="url(#dots)"/>
+      <g id="cZones"></g>
       <g id="cCones"></g>
       <g id="cLines"></g>
       <g id="cTexts"></g>
       <g id="cPins"></g>
+      <g id="cSug"></g>
       <g id="cDraft"></g>
     </g>
   </svg>
@@ -317,9 +327,223 @@ function buildExample(){
   });
 }
 
+/* SUG-CORE-START */
+/* Camera suggestion core for the 2D floor plan tool (v2).
+   Pure functions, no DOM. ES5 style to match flat_camera_coverage_floor_plan.html.
+   Meant to be pasted inline inside the page's IIFE (the site stays a set of static files). */
+var Sug=(function(){
+var W=520,H=520,C=5,N=Math.ceil(W/C);          // 5-unit raster: 104 x 104 cells
+var EPS=1e-6,MIN_CELLS=12;
+
+function cellOf(v){return Math.min(N-1,Math.max(0,Math.floor(v/C)));}
+function cellIdx(x,y){return cellOf(y)*N+cellOf(x);}
+
+/* Walls onto the raster. Samples every C/2 units, so consecutive cells are 8-connected. */
+function rasterize(lines){
+  var g=new Uint8Array(N*N),i,k,l,dx,dy,len,n,t;
+  for(i=0;i<lines.length;i++){
+    l=lines[i];dx=l.x2-l.x1;dy=l.y2-l.y1;len=Math.hypot(dx,dy);
+    n=Math.max(1,Math.ceil(len/(C/2)));
+    for(k=0;k<=n;k++){t=k/n;g[cellIdx(l.x1+dx*t,l.y1+dy*t)]=1;}
+  }
+  return g;
+}
+
+/* 4-connected flood fill of the free cells. A region touching the raster edge is "open" (outside). */
+function label(g){
+  var reg=new Int16Array(N*N),regions=[],q=new Int32Array(N*N),s,c,x,y,h,t,id,open,cnt;
+  for(s=0;s<N*N;s++)reg[s]=-1;
+  function visit(n){if(!g[n]&&reg[n]<0){reg[n]=id;q[t++]=n;}}
+  for(s=0;s<N*N;s++){
+    if(g[s]||reg[s]>=0)continue;
+    id=regions.length;h=0;t=0;open=false;cnt=0;
+    reg[s]=id;q[t++]=s;
+    while(h<t){
+      c=q[h++];x=c%N;y=(c-x)/N;cnt++;
+      if(x===0||y===0||x===N-1||y===N-1)open=true;
+      if(x>0)visit(c-1);
+      if(x<N-1)visit(c+1);
+      if(y>0)visit(c-N);
+      if(y<N-1)visit(c+N);
+    }
+    regions.push({id:id,open:open,count:cnt});
+  }
+  /* distance from the nearest wall (multi-source BFS), used to place the prompt text */
+  var dist=new Int16Array(N*N),dq=new Int32Array(N*N),dh=0,dt=0,i;
+  for(i=0;i<N*N;i++){if(g[i]){dist[i]=0;dq[dt++]=i;}else dist[i]=-1;}
+  function dv(n,d){if(dist[n]<0){dist[n]=d;dq[dt++]=n;}}
+  while(dh<dt){
+    c=dq[dh++];x=c%N;
+    if(x>0)dv(c-1,dist[c]+1);
+    if(x<N-1)dv(c+1,dist[c]+1);
+    if(c>=N)dv(c-N,dist[c]+1);
+    if(c<N*N-N)dv(c+N,dist[c]+1);
+  }
+  var best=[];
+  for(i=0;i<regions.length;i++)best.push(-1);
+  for(i=0;i<N*N;i++){
+    if(g[i])continue;
+    var r=reg[i],d=dist[i]<0?0:dist[i];
+    if(d>best[r]){best[r]=d;regions[r].ax=(i%N)*C+C/2;regions[r].ay=Math.floor(i/N)*C+C/2;}
+  }
+  return {reg:reg,regions:regions,dist:dist};
+}
+
+/* One SVG path (row spans) that tints a whole region. */
+function tintPath(lab,id){
+  var d='',x,y,x0,reg=lab.reg;
+  for(y=0;y<N;y++){
+    x=0;
+    while(x<N){
+      if(reg[y*N+x]!==id){x++;continue;}
+      x0=x;while(x<N&&reg[y*N+x]===id)x++;
+      d+='M'+x0*C+' '+y*C+'h'+(x-x0)*C+'v'+C+'h-'+(x-x0)*C+'z';
+    }
+  }
+  return d;
+}
+
+/* Which region does a zone seed sit in? */
+function zoneRegion(g,lab,z){
+  if(z.x<0||z.y<0||z.x>W||z.y>H)return -1;
+  var i=cellIdx(z.x,z.y);
+  return g[i]?-1:lab.reg[i];
+}
+
+/* Everything the UI needs for step 1 (the nudge). */
+function analyze(lines,zones){
+  var g=rasterize(lines),lab=label(g),i,r,areas=[],info=[],type={},conflict={},unmarked=0;
+  zones=zones||[];
+  for(i=0;i<zones.length;i++){
+    r=zoneRegion(g,lab,zones[i]);
+    if(r<0){info.push({region:-1,stale:true,open:false});continue;}
+    info.push({region:r,stale:false,open:lab.regions[r].open});
+    if(type[r]&&type[r]!==zones[i].t)conflict[r]=true;
+    type[r]=zones[i].t;
+  }
+  for(i=0;i<lab.regions.length;i++){
+    r=lab.regions[i];
+    if(r.open||r.count<MIN_CELLS)continue;
+    if(!type[i])unmarked++;
+    areas.push({id:i,x:r.ax,y:r.ay,count:r.count,type:type[i]||null,conflict:!!conflict[i]});
+  }
+  return {g:g,lab:lab,areas:areas,zoneInfo:info,unmarked:unmarked,type:type,conflict:conflict};
+}
+
+/* ---- corners ---- */
+function angDeg(dx,dy){var a=Math.atan2(dy,dx)*180/Math.PI;return a<0?a+360:a;}
+
+function corners(lines){
+  var segs=[],i,j,l,verts={},list=[];
+  for(i=0;i<lines.length;i++){
+    l=lines[i];
+    if(Math.hypot(l.x2-l.x1,l.y2-l.y1)>EPS)segs.push(l);
+  }
+  function addV(x,y){
+    var key=Math.round(x*100)+','+Math.round(y*100);
+    if(!verts[key]){verts[key]={x:x,y:y};list.push(verts[key]);}
+  }
+  for(i=0;i<segs.length;i++){addV(segs[i].x1,segs[i].y1);addV(segs[i].x2,segs[i].y2);}
+  /* proper crossings (an X with no shared endpoint) */
+  for(i=0;i<segs.length;i++){
+    for(j=i+1;j<segs.length;j++){
+      var a=segs[i],b=segs[j],rx=a.x2-a.x1,ry=a.y2-a.y1,sx=b.x2-b.x1,sy=b.y2-b.y1,den=rx*sy-ry*sx;
+      if(Math.abs(den)<EPS)continue;
+      var t=((b.x1-a.x1)*sy-(b.y1-a.y1)*sx)/den,u=((b.x1-a.x1)*ry-(b.y1-a.y1)*rx)/den;
+      if(t>EPS&&t<1-EPS&&u>EPS&&u<1-EPS)addV(a.x1+t*rx,a.y1+t*ry);
+    }
+  }
+  var out=[];
+  list.forEach(function(v){
+    var dirs=[];
+    segs.forEach(function(s){
+      var dx=s.x2-s.x1,dy=s.y2-s.y1,len2=dx*dx+dy*dy;
+      var d1=Math.hypot(v.x-s.x1,v.y-s.y1),d2=Math.hypot(v.x-s.x2,v.y-s.y2);
+      if(d1<1e-3){dirs.push(angDeg(dx,dy));return;}
+      if(d2<1e-3){dirs.push(angDeg(-dx,-dy));return;}
+      var t=((v.x-s.x1)*dx+(v.y-s.y1)*dy)/len2;
+      if(t>0&&t<1&&Math.hypot(v.x-(s.x1+t*dx),v.y-(s.y1+t*dy))<1e-3){
+        dirs.push(angDeg(dx,dy));dirs.push(angDeg(-dx,-dy));   // T-junction or crossing: wall runs through
+      }
+    });
+    dirs.sort(function(p,q){return p-q;});
+    var u=[];
+    dirs.forEach(function(a){if(!u.length||a-u[u.length-1]>1)u.push(a);});
+    if(u.length>1&&u[0]+360-u[u.length-1]<=1)u.pop();            // 359.5 and 0.2 are the same direction
+    if(u.length<2)return;                                        // dead end: no corner
+    for(var k=0;k<u.length;k++){
+      var from=u[k],to=k+1<u.length?u[k+1]:u[0]+360,size=to-from;
+      if(Math.abs(size-180)<1)continue;                          // straight wall
+      out.push({x:v.x,y:v.y,bis:(from+size/2)%360,size:size});
+    }
+  });
+  return out;
+}
+
+/* ---- coverage (cells of the same region inside the cone) ---- */
+function cover(cam,lab,regId,fov,range){
+  var out=[],r=Math.ceil(range/C)+1,cx=cellOf(cam.x),cy=cellOf(cam.y),x,y,px,py,d,a,diff;
+  for(y=Math.max(0,cy-r);y<=Math.min(N-1,cy+r);y++){
+    for(x=Math.max(0,cx-r);x<=Math.min(N-1,cx+r);x++){
+      if(lab.reg[y*N+x]!==regId)continue;
+      px=x*C+C/2-cam.x;py=y*C+C/2-cam.y;d=Math.hypot(px,py);
+      if(d>range)continue;
+      if(d>0){
+        a=angDeg(px,py);diff=Math.abs(a-((cam.a%360)+360)%360);if(diff>180)diff=360-diff;
+        if(diff>fov/2)continue;
+      }
+      out.push(y*N+x);
+    }
+  }
+  return out;
+}
+
+/* ---- step 2: suggestions ----
+   opts: {fov:deg, range:world units, cap:{in:n,out:n} (optional)} */
+function suggest(lines,zones,opts){
+  opts=opts||{};
+  var fov=opts.fov||100,range=opts.range||120,A=analyze(lines,zones),g=A.g,lab=A.lab;
+  var cs=corners(lines),cands=[],skippedMixed=0;
+  cs.forEach(function(c){
+    var rad=c.bis*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
+    var px=c.x+10*cos,py=c.y+10*sin;
+    if(px<0||py<0||px>W||py>H)return;
+    var pi=cellIdx(px,py);
+    if(g[pi])return;                                             // wedge too narrow to probe
+    var r=lab.reg[pi],t=A.type[r];
+    if(!t)return;
+    if(A.conflict[r]){skippedMixed++;return;}
+    if(t==='in'&&c.size>=179)return;                             // indoor cameras sit in inner corners only
+    var cam={t:t,x:+(c.x+8*cos).toFixed(1),y:+(c.y+8*sin).toFixed(1),a:Math.round(c.bis)};
+    cands.push({cam:cam,region:r,cells:cover(cam,lab,r,fov,range)});
+  });
+  var result=[];
+  ['in','out'].forEach(function(t){
+    var pool=cands.filter(function(c){return c.cam.t===t;});
+    var cap=opts.cap&&opts.cap[t]!==undefined?opts.cap[t]:Infinity;
+    if(cap>=pool.length){pool.forEach(function(c){result.push(c.cam);});return;}
+    var seen=new Uint8Array(N*N),n=0;
+    while(n<cap&&pool.length){
+      var bi=-1,bg=0;
+      pool.forEach(function(c,i){
+        var gain=0;for(var k=0;k<c.cells.length;k++)if(!seen[c.cells[k]])gain++;
+        if(gain>bg){bg=gain;bi=i;}
+      });
+      if(bi<0)break;
+      pool[bi].cells.forEach(function(ci){seen[ci]=1;});
+      result.push(pool[bi].cam);pool.splice(bi,1);n++;
+    }
+  });
+  return {cams:result,unmarked:A.unmarked,mixedAreas:skippedMixed,analysis:A};
+}
+
+return {rasterize:rasterize,label:label,tintPath:tintPath,analyze:analyze,corners:corners,suggest:suggest,N:N,C:C};
+})();
+/* SUG-CORE-END */
+
 /* ================= CUSTOM ================= */
 var W=520,H=520,G=20,PR=13,BASE_R=120;
-var st={lines:[],texts:[],cams:[]};
+var st={lines:[],texts:[],cams:[],zones:[]};
 var undoS=[],redoS=[];
 var tool='line';
 var view={s:1,x:0,y:0};
@@ -335,7 +559,8 @@ var HINTS={
   out:'Tap a dot to place an outdoor camera.',
   aim:'Drag from a camera toward where it should look. Turn on coverage cones to see it.',
   erase:'Tap a line, label or camera to delete it.',
-  pan:'Drag to move the canvas.'
+  pan:'Drag to move the canvas.',
+  suggest:'Mark each area as indoor or outdoor, then place the suggested corner cameras.'
 };
 function setHint(){$('hint').textContent=HINTS[tool]+' Pinch with two fingers to zoom or pan.';}
 
@@ -351,24 +576,25 @@ function pushUndo(){
 function doUndo(){
   if(!undoS.length)return;
   redoS.push(JSON.stringify(st));
-  st=JSON.parse(undoS.pop());
+  st=JSON.parse(undoS.pop());st.zones=st.zones||[];
   cancelPending();renderCustom();updButtons();
 }
 function doRedo(){
   if(!redoS.length)return;
   undoS.push(JSON.stringify(st));
-  st=JSON.parse(redoS.pop());
+  st=JSON.parse(redoS.pop());st.zones=st.zones||[];
   cancelPending();renderCustom();updButtons();
 }
 function updButtons(){
   $('btnUndo').disabled=!undoS.length;
   $('btnRedo').disabled=!redoS.length;
-  $('btnClear').disabled=!(st.lines.length||st.texts.length||st.cams.length);
+  $('btnClear').disabled=!(st.lines.length||st.texts.length||st.cams.length||st.zones.length);
   schedulePersist();
 }
 
 function applyView(){
   world.setAttribute('transform','translate('+view.x.toFixed(2)+' '+view.y.toFixed(2)+') scale('+view.s.toFixed(4)+')');
+  rescaleSug();
 }
 function fitView(){
   var r=cv.getBoundingClientRect();
@@ -385,7 +611,7 @@ function toWorld(cx,cy){
 function renderCustom(){
   var showC=$('showCones').checked,f=fovVal(),s=rngScale();
   var cones=$('cCones'),lines=$('cLines'),texts=$('cTexts'),pins=$('cPins'),dr=$('cDraft');
-  cones.innerHTML='';lines.innerHTML='';texts.innerHTML='';pins.innerHTML='';dr.innerHTML='';
+  cones.innerHTML='';lines.innerHTML='';texts.innerHTML='';pins.innerHTML='';dr.innerHTML='';$('cZones').innerHTML='';$('cSug').innerHTML='';
 
   if(showC){
     st.cams.forEach(function(c){
@@ -419,7 +645,167 @@ function renderCustom(){
   if(pending){
     dr.appendChild(mk('circle',{cx:pending.x,cy:pending.y,r:5,fill:'var(--accent)'}));
   }
+  renderSuggestLayer();
 }
+
+/* ================= SUGGEST (v2) ================= */
+var pendingOpen=null,SUG=null,sugHits=[];
+function plural(n,w){return n+' '+w+(n===1?'':'s');}
+/* Reads the cart saved by index.html (same origin, local storage only). Bullet = outdoor, as in index.html. */
+function cartCounts(){
+  try{
+    var s=JSON.parse(localStorage.getItem('cameraPlanner.v3')||'null');
+    if(!s||!s.carts)return null;
+    var i=0,o=0;
+    [s.sys,'wl'].forEach(function(k){
+      var c=s.carts[k]||{};
+      for(var id in c){var q=+c[id]||0;if(id==='bu')o+=q;else i+=q;}
+    });
+    return (i+o)?{'in':i,out:o}:null;
+  }catch(_){return null;}
+}
+function sugCompute(){
+  var cart=cartCounts(),cap,pi=0,po=0;
+  if(cart){
+    st.cams.forEach(function(c){if(c.t==='in')pi++;else po++;});
+    cap={'in':Math.max(0,cart['in']-pi),out:Math.max(0,cart.out-po)};
+  }
+  var key=JSON.stringify([st.lines,st.zones,st.cams,fovVal(),+$('rng').value,cap||0]);
+  if(SUG&&SUG.key===key)return SUG;
+  var res=Sug.suggest(st.lines,st.zones,{fov:fovVal(),range:BASE_R*rngScale(),cap:cap});
+  res.cams=res.cams.filter(function(g){
+    return !st.cams.some(function(c){return Math.hypot(c.x-g.x,c.y-g.y)<12;});
+  });
+  SUG={key:key,res:res,A:res.analysis,cart:cart};
+  return SUG;
+}
+function chipGroup(x,y){
+  return mk('g',{'data-ax':x,'data-ay':y,transform:'translate('+x+' '+y+') scale('+(1/view.s).toFixed(4)+')'});
+}
+function chip(g,x0,x1,label,col){
+  g.appendChild(mk('rect',{x:x0,y:-14,width:x1-x0,height:36,rx:8,style:'fill:var(--surface-2);stroke:'+col+';stroke-width:2'}));
+  var t=mk('text',{x:(x0+x1)/2,y:4,'text-anchor':'middle','dominant-baseline':'central',style:'fill:var(--text-primary);font-size:14px;font-weight:600'});
+  t.textContent=label;g.appendChild(t);
+}
+function promptText(g,s){
+  var t=mk('text',{x:0,y:-26,'text-anchor':'middle',style:'fill:var(--text-primary);font-size:13px;font-weight:600;paint-order:stroke;stroke:var(--surface-2);stroke-width:4px'});
+  t.textContent=s;g.appendChild(t);
+}
+function promptChips(g){chip(g,-82,-4,'Indoor',IN);chip(g,4,82,'Outdoor',OUT);}
+function rescaleSug(){
+  var g=$('cSug').children,k=(1/view.s).toFixed(4),i,e;
+  for(i=0;i<g.length;i++){
+    e=g[i];
+    if(e.hasAttribute('data-ax'))e.setAttribute('transform','translate('+e.getAttribute('data-ax')+' '+e.getAttribute('data-ay')+') scale('+k+')');
+  }
+}
+function renderSuggestLayer(){
+  $('sugbar').hidden=tool!=='suggest';
+  if(tool!=='suggest')return;
+  var S=sugCompute(),A=S.A,zl=$('cZones'),sg=$('cSug'),marks={},openMarks=0,mixed=0;
+  sugHits=[];
+  st.zones.forEach(function(z,i){
+    var zi=A.zoneInfo[i];if(zi.stale)return;
+    var m=marks[zi.region];
+    if(!m)marks[zi.region]={id:zi.region,t:z.t,x:z.x,y:z.y,open:zi.open};else m.t=z.t;
+  });
+  /* ghost cameras first, so chips stay on top */
+  S.res.cams.forEach(function(c){
+    var col=c.t==='in'?IN:OUT,rad=c.a*Math.PI/180;
+    sg.appendChild(mk('line',{x1:c.x,y1:c.y,x2:c.x+Math.cos(rad)*(PR+10),y2:c.y+Math.sin(rad)*(PR+10),style:'stroke:'+col+';stroke-width:3;stroke-linecap:round'}));
+    sg.appendChild(mk('circle',{cx:c.x,cy:c.y,r:PR,style:'fill:'+col+';fill-opacity:.25;stroke:'+col+';stroke-width:2;stroke-dasharray:4 3'}));
+  });
+  Object.keys(marks).forEach(function(key){
+    var m=marks[key],col=m.t==='in'?IN:OUT,ar=null,id=+key;
+    A.areas.forEach(function(a){if(a.id===id)ar=a;});
+    zl.appendChild(mk('path',{d:Sug.tintPath(A.lab,id),style:'fill:'+col+';fill-opacity:.16'}));
+    var px=ar?ar.x:m.x,py=ar?ar.y:m.y,g=chipGroup(px,py),mx=A.conflict[id];
+    if(m.open)openMarks++;
+    if(mx)mixed++;
+    chip(g,-62,62,(mx?'Mixed':(m.t==='in'?'Indoor':'Outdoor'))+(m.open?' ⚠':''),col);
+    sg.appendChild(g);
+    sugHits.push({k:'mark',x:px,y:py,id:id,t:m.t});
+  });
+  A.areas.forEach(function(a){
+    if(a.type)return;
+    var g=chipGroup(a.x,a.y);
+    promptText(g,'Indoor or outdoor?');promptChips(g);
+    sg.appendChild(g);
+    sugHits.push({k:'prompt',x:a.x,y:a.y,id:a.id});
+  });
+  if(pendingOpen){
+    var pg=chipGroup(pendingOpen.x,pendingOpen.y);
+    pg.appendChild(mk('circle',{cx:0,cy:0,r:4,style:'fill:var(--accent)'}));
+    promptText(pg,'Mark this open area');promptChips(pg);
+    sg.appendChild(pg);
+    sugHits.push({k:'pend',x:pendingOpen.x,y:pendingOpen.y});
+  }
+  /* status bar */
+  var cams=S.res.cams,ni=0,no=0,stale=0,msg=[],nm=Object.keys(marks).length;
+  cams.forEach(function(c){if(c.t==='in')ni++;else no++;});
+  A.zoneInfo.forEach(function(z){if(z.stale)stale++;});
+  if(pendingOpen)msg.push('This area is open to the edge. Close the doorway with a line, or mark it anyway.');
+  else if(!A.areas.length&&!nm)msg.push('No closed areas found yet. Close your walls with lines, or tap an empty spot outside to mark the outside.');
+  else if(!nm)msg.push('Tap Indoor or Outdoor in each area. To mark the outside, tap an empty spot outside the walls.');
+  if(A.unmarked&&nm)msg.push(plural(A.unmarked,'area')+' not marked, no cameras suggested there.');
+  if(openMarks&&!pendingOpen)msg.push(plural(openMarks,'marked area')+' open to the edge (⚠). Close the doorway with a line, or keep it as marked.');
+  if(stale)msg.push(plural(stale,'mark')+' no longer sit in an area because the walls changed. Use Clear marks to remove them.');
+  if(mixed)msg.push('An area has both indoor and outdoor marks. Tap its label to reset it.');
+  if(nm)msg.push(cams.length?'Suggested: '+ni+' indoor, '+no+' outdoor (dashed). Tap one to place it.':'No new corners to suggest in the marked areas.');
+  if(S.cart)msg.push('Your cart has '+S.cart['in']+' indoor, '+S.cart.out+' outdoor, so suggestions are limited to what is left of that.');
+  $('sugMsg').textContent=msg.join(' ');
+  $('sugPlace').textContent='Place all ('+cams.length+')';
+  $('sugPlace').disabled=!cams.length;
+  $('sugClear').disabled=!st.zones.length;
+}
+function setRegion(h,t){
+  var A=sugCompute().A;
+  pushUndo();
+  if(h.k==='pend'){
+    st.zones.push({x:Math.round(h.x*10)/10,y:Math.round(h.y*10)/10,t:t});
+  }else{
+    st.zones=st.zones.filter(function(z,i){return A.zoneInfo[i].region!==h.id;});
+    if(t)st.zones.push({x:h.x,y:h.y,t:t});
+  }
+  pendingOpen=null;
+}
+function inChip(lx,ly,x0,x1){return lx>=x0-6&&lx<=x1+6&&ly>=-20&&ly<=28;}
+function sugTap(p){
+  var S=sugCompute(),A=S.A,k=1/view.s,i,h,lx,ly;
+  for(i=0;i<sugHits.length;i++){
+    h=sugHits[i];lx=(p.x-h.x)*view.s;ly=(p.y-h.y)*view.s;
+    if(h.k==='mark'){
+      if(inChip(lx,ly,-62,62)){setRegion(h,h.t==='in'?'out':(h.t==='out'?null:'in'));return;}
+    }else{
+      if(inChip(lx,ly,-82,-4)){setRegion(h,'in');return;}
+      if(inChip(lx,ly,4,82)){setRegion(h,'out');return;}
+    }
+  }
+  for(i=0;i<S.res.cams.length;i++){
+    var c=S.res.cams[i];
+    if(Math.hypot(p.x-c.x,p.y-c.y)<=PR+14*k){pushUndo();st.cams.push({t:c.t,x:c.x,y:c.y,a:c.a});return;}
+  }
+  /* empty spot: offer to mark an open (outside) area */
+  if(p.x<0||p.y<0||p.x>=W||p.y>=H){pendingOpen=null;return;}
+  var N=Sug.N,C=Sug.C,ci=Math.min(N-1,Math.floor(p.y/C))*N+Math.min(N-1,Math.floor(p.x/C));
+  if(A.g[ci]){pendingOpen=null;return;}
+  var r=A.lab.reg[ci];
+  if(!A.lab.regions[r].open||A.type[r]){pendingOpen=null;return;}
+  pendingOpen={x:p.x,y:p.y};
+}
+$('sugPlace').onclick=function(){
+  var cams=sugCompute().res.cams;
+  if(!cams.length)return;
+  pushUndo();
+  cams.forEach(function(c){st.cams.push({t:c.t,x:c.x,y:c.y,a:c.a});});
+  renderCustom();updButtons();
+  say('Placed '+plural(cams.length,'camera')+'. Undo reverts them all.');
+};
+$('sugClear').onclick=function(){
+  if(!st.zones.length)return;
+  pushUndo();st.zones=[];pendingOpen=null;
+  renderCustom();updButtons();
+};
 
 /* Hit testing (world coords; tolerances scaled to screen) */
 function hit(p){
@@ -576,6 +962,8 @@ function endPointer(e,cancelled){
       st.cams.push({t:a.tool,x:snap(a.p.x,W),y:snap(a.p.y,H),a:90});
     }else if(a.tool==='text'){
       setPending(a.p);
+    }else if(a.tool==='suggest'){
+      sugTap(a.p);
     }else if(a.tool==='erase'){
       var h=hit(a.p);
       if(h){pushUndo();st[h.k].splice(h.i,1);}
@@ -605,6 +993,7 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-tool]'),function(b
       x.setAttribute('aria-pressed',x===b?'true':'false');
     });
     draft=null;
+    pendingOpen=null;
     if(tool!=='text')cancelPending();
     setHint();renderCustom();
   });
@@ -612,9 +1001,9 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-tool]'),function(b
 $('btnUndo').onclick=doUndo;
 $('btnRedo').onclick=doRedo;
 $('btnClear').onclick=function(){
-  if(!(st.lines.length||st.texts.length||st.cams.length))return;
+  if(!(st.lines.length||st.texts.length||st.cams.length||st.zones.length))return;
   pushUndo();
-  st={lines:[],texts:[],cams:[]};
+  st={lines:[],texts:[],cams:[],zones:[]};
   cancelPending();renderCustom();updButtons();
 };
 $('btnFit').onclick=function(){viewTouched=false;fitView();};
@@ -638,7 +1027,7 @@ function num(v,lo,hi,def){
 }
 function sanitize(d){
   if(!d||typeof d!=='object')return null;
-  var out={lines:[],texts:[],cams:[]};
+  var out={lines:[],texts:[],cams:[],zones:[]};
   (Array.isArray(d.lines)?d.lines:[]).slice(0,2000).forEach(function(l){
     if(!l)return;
     out.lines.push({x1:num(l.x1,0,W,0),y1:num(l.y1,0,H,0),x2:num(l.x2,0,W,0),y2:num(l.y2,0,H,0)});
@@ -652,6 +1041,10 @@ function sanitize(d){
     if(!c)return;
     out.cams.push({t:c.t==='out'?'out':'in',x:num(c.x,0,W,0),y:num(c.y,0,H,0),a:num(c.a,-360,360,90)});
   });
+  (Array.isArray(d.zones)?d.zones:[]).slice(0,200).forEach(function(z){
+    if(!z)return;
+    out.zones.push({t:z.t==='out'?'out':'in',x:num(z.x,0,W,0),y:num(z.y,0,H,0)});
+  });
   var sv=d.settings||{};
   out.settings={
     showCones:sv.showCones===true,
@@ -662,13 +1055,13 @@ function sanitize(d){
 }
 function snapshotData(){
   return {
-    app:'flat-camera-coverage',version:1,
-    lines:st.lines,texts:st.texts,cams:st.cams,
+    app:'flat-camera-coverage',version:2,
+    lines:st.lines,texts:st.texts,cams:st.cams,zones:st.zones,
     settings:{showCones:$('showCones').checked,fov:fovVal(),rng:+$('rng').value}
   };
 }
 function applyData(d){
-  st={lines:d.lines,texts:d.texts,cams:d.cams};
+  st={lines:d.lines,texts:d.texts,cams:d.cams,zones:d.zones||[]};
   $('showCones').checked=d.settings.showCones;
   $('fov').value=d.settings.fov;
   $('rng').value=d.settings.rng;
@@ -719,7 +1112,7 @@ $('fileIn').addEventListener('change',function(){
     if(!d||!(Array.isArray(raw.lines)||Array.isArray(raw.texts)||Array.isArray(raw.cams))){
       say('That file is not a valid plan.');return;
     }
-    var has=st.lines.length||st.texts.length||st.cams.length;
+    var has=st.lines.length||st.texts.length||st.cams.length||st.zones.length;
     if(has&&!window.confirm('Replace your current plan with this file? You can still tap Undo afterwards.'))return;
     pushUndo();
     applyData(d);
