@@ -205,7 +205,7 @@ input[type=range]::-moz-range-thumb{
     <button type="button" data-tool="aim" aria-pressed="false">Aim</button>
     <button type="button" data-tool="erase" aria-pressed="false">Erase</button>
     <button type="button" data-tool="pan" aria-pressed="false">Pan</button>
-    <button type="button" data-tool="suggest" aria-pressed="false">Suggest</button>
+    <button type="button" data-tool="suggest" aria-pressed="false"><span style="text-align:center;line-height:1.15">Suggest<small style="display:block;font-size:10px;opacity:.8">(experimental)</small></span></button>
   </div>
   <div class="actions">
     <button type="button" id="btnUndo" disabled>Undo</button>
@@ -221,6 +221,7 @@ input[type=range]::-moz-range-thumb{
   <p class="hint" id="status" aria-live="polite" style="min-height:0;color:var(--accent)"></p>
   <p class="hint" id="hint" aria-live="polite"></p>
   <div id="sugbar" hidden>
+    <p class="hint" style="min-height:0;font-weight:600">Suggest (experimental): placements are a starting point and can be wrong. Check each camera.</p>
     <p class="hint" id="sugMsg" aria-live="polite" style="min-height:0"></p>
     <div class="actions" style="grid-template-columns:repeat(2,1fr)">
       <button type="button" id="sugPlace" disabled>Place all (0)</button>
@@ -333,7 +334,7 @@ function buildExample(){
    Meant to be pasted inline inside the page's IIFE (the site stays a set of static files). */
 var Sug=(function(){
 var W=520,H=520,C=5,N=Math.ceil(W/C);          // 5-unit raster: 104 x 104 cells
-var EPS=1e-6,MIN_CELLS=12;
+var EPS=1e-6,MIN_CELLS=12,MAX_ROOM=3;
 
 function cellOf(v){return Math.min(N-1,Math.max(0,Math.floor(v/C)));}
 function cellIdx(x,y){return cellOf(y)*N+cellOf(x);}
@@ -498,6 +499,22 @@ function cover(cam,lab,regId,fov,range){
   return out;
 }
 
+/* Greedy pick: repeatedly take the candidate that covers the most cells not yet covered. */
+function pickGreedy(pool,cap){
+  var seen=new Uint8Array(N*N),out=[];
+  while(out.length<cap&&pool.length){
+    var bi=-1,bg=0;
+    pool.forEach(function(c,i){
+      var gain=0,k;for(k=0;k<c.cells.length;k++)if(!seen[c.cells[k]])gain++;
+      if(gain>bg){bg=gain;bi=i;}
+    });
+    if(bi<0)break;
+    pool[bi].cells.forEach(function(ci){seen[ci]=1;});
+    out.push(pool[bi]);pool.splice(bi,1);
+  }
+  return out;
+}
+
 /* ---- step 2: suggestions ----
    opts: {fov:deg, range:world units, cap:{in:n,out:n} (optional)} */
 function suggest(lines,zones,opts){
@@ -517,22 +534,20 @@ function suggest(lines,zones,opts){
     var cam={t:t,x:+(c.x+8*cos).toFixed(1),y:+(c.y+8*sin).toFixed(1),a:Math.round(c.bis)};
     cands.push({cam:cam,region:r,cells:cover(cam,lab,r,fov,range)});
   });
-  var result=[];
+  /* A closed space gets at most MAX_ROOM cameras, chosen by how much new floor they cover.
+     The outside (an open region) is not capped. */
+  var byRegion={},kept=[],result=[];
+  cands.forEach(function(c){(byRegion[c.region]=byRegion[c.region]||[]).push(c);});
+  Object.keys(byRegion).forEach(function(r){
+    var pool=byRegion[r];
+    if(!lab.regions[r].open&&pool.length>MAX_ROOM)pool=pickGreedy(pool.slice(),MAX_ROOM);
+    kept=kept.concat(pool);
+  });
   ['in','out'].forEach(function(t){
-    var pool=cands.filter(function(c){return c.cam.t===t;});
+    var pool=kept.filter(function(c){return c.cam.t===t;});
     var cap=opts.cap&&opts.cap[t]!==undefined?opts.cap[t]:Infinity;
-    if(cap>=pool.length){pool.forEach(function(c){result.push(c.cam);});return;}
-    var seen=new Uint8Array(N*N),n=0;
-    while(n<cap&&pool.length){
-      var bi=-1,bg=0;
-      pool.forEach(function(c,i){
-        var gain=0;for(var k=0;k<c.cells.length;k++)if(!seen[c.cells[k]])gain++;
-        if(gain>bg){bg=gain;bi=i;}
-      });
-      if(bi<0)break;
-      pool[bi].cells.forEach(function(ci){seen[ci]=1;});
-      result.push(pool[bi].cam);pool.splice(bi,1);n++;
-    }
+    if(cap<pool.length)pool=pickGreedy(pool.slice(),cap);
+    pool.forEach(function(c){result.push(c.cam);});
   });
   return {cams:result,unmarked:A.unmarked,mixedAreas:skippedMixed,analysis:A};
 }
@@ -560,7 +575,7 @@ var HINTS={
   aim:'Drag from a camera toward where it should look. Turn on coverage cones to see it.',
   erase:'Tap a line, label or camera to delete it.',
   pan:'Drag to move the canvas.',
-  suggest:'Mark each area as indoor or outdoor, then place the suggested corner cameras.'
+  suggest:'Experimental. Mark each area In or Out, then place the suggested corner cameras.'
 };
 function setHint(){$('hint').textContent=HINTS[tool]+' Pinch with two fingers to zoom or pan.';}
 
@@ -691,7 +706,7 @@ function promptText(g,s){
   var t=mk('text',{x:0,y:-26,'text-anchor':'middle',style:'fill:var(--text-primary);font-size:13px;font-weight:600;paint-order:stroke;stroke:var(--surface-2);stroke-width:4px'});
   t.textContent=s;g.appendChild(t);
 }
-function promptChips(g){chip(g,-82,-4,'Indoor',IN);chip(g,4,82,'Outdoor',OUT);}
+function promptChips(g){chip(g,-82,-4,'In',IN);chip(g,4,82,'Out',OUT);}
 function rescaleSug(){
   var g=$('cSug').children,k=(1/view.s).toFixed(4),i,e;
   for(i=0;i<g.length;i++){
@@ -722,14 +737,14 @@ function renderSuggestLayer(){
     var px=ar?ar.x:m.x,py=ar?ar.y:m.y,g=chipGroup(px,py),mx=A.conflict[id];
     if(m.open)openMarks++;
     if(mx)mixed++;
-    chip(g,-62,62,(mx?'Mixed':(m.t==='in'?'Indoor':'Outdoor'))+(m.open?' ⚠':''),col);
+    chip(g,-62,62,(mx?'Mixed':(m.t==='in'?'In':'Out'))+(m.open?' ⚠':''),col);
     sg.appendChild(g);
     sugHits.push({k:'mark',x:px,y:py,id:id,t:m.t});
   });
   A.areas.forEach(function(a){
     if(a.type)return;
     var g=chipGroup(a.x,a.y);
-    promptText(g,'Indoor or outdoor?');promptChips(g);
+    promptText(g,'In or out?');promptChips(g);
     sg.appendChild(g);
     sugHits.push({k:'prompt',x:a.x,y:a.y,id:a.id});
   });
@@ -746,12 +761,12 @@ function renderSuggestLayer(){
   A.zoneInfo.forEach(function(z){if(z.stale)stale++;});
   if(pendingOpen)msg.push('This area is open to the edge. Close the doorway with a line, or mark it anyway.');
   else if(!A.areas.length&&!nm)msg.push('No closed areas found yet. Close your walls with lines, or tap an empty spot outside to mark the outside.');
-  else if(!nm)msg.push('Tap Indoor or Outdoor in each area. To mark the outside, tap an empty spot outside the walls.');
+  else if(!nm)msg.push('Tap In or Out in each area. To mark the outside, tap an empty spot outside the walls, then Out.');
   if(A.unmarked&&nm)msg.push(plural(A.unmarked,'area')+' not marked, no cameras suggested there.');
   if(openMarks&&!pendingOpen)msg.push(plural(openMarks,'marked area')+' open to the edge (⚠). Close the doorway with a line, or keep it as marked.');
   if(stale)msg.push(plural(stale,'mark')+' no longer sit in an area because the walls changed. Use Clear marks to remove them.');
   if(mixed)msg.push('An area has both indoor and outdoor marks. Tap its label to reset it.');
-  if(nm)msg.push(cams.length?'Suggested: '+ni+' indoor, '+no+' outdoor (dashed). Tap one to place it.':'No new corners to suggest in the marked areas.');
+  if(nm)msg.push(cams.length?'Suggested: '+ni+' indoor, '+no+' outdoor (dashed), at most 3 per closed space. Tap one to place it.':'No new corners to suggest in the marked areas.');
   if(S.cart)msg.push('Your cart has '+S.cart['in']+' indoor, '+S.cart.out+' outdoor, so suggestions are limited to what is left of that.');
   $('sugMsg').textContent=msg.join(' ');
   $('sugPlace').textContent='Place all ('+cams.length+')';

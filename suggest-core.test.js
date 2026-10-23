@@ -21,11 +21,11 @@ t('diamond (diagonal walls) does not leak',function(){
   var d=[L(200,100,300,200),L(300,200,200,300),L(200,300,100,200),L(100,200,200,100)];
   assert.strictEqual(Sug.analyze(d,[]).areas.length,1);
 });
-t('indoor zone: 4 inner-corner cameras, aimed inward',function(){
+t('indoor zone: max 3 cameras in a closed rectangle, inside, never all 4 corners',function(){
   var s=Sug.suggest(rect,[{x:200,y:150,t:'in'}]);
-  assert.strictEqual(s.cams.length,4);
+  assert.strictEqual(s.cams.length,3);
   s.cams.forEach(function(c){assert(c.x>60&&c.x<340&&c.y>40&&c.y<250,JSON.stringify(c));});
-  var tl=s.cams.filter(function(c){return c.x<100&&c.y<100;})[0];assert.strictEqual(tl.a,45);
+  s.cams.forEach(function(c){assert.strictEqual(c.t,'in');});
 });
 t('outdoor zone outside: 4 outer-corner cameras',function(){
   var s=Sug.suggest(rect,[{x:20,y:20,t:'out'}]);
@@ -35,14 +35,18 @@ t('outdoor zone outside: 4 outer-corner cameras',function(){
 t('unmarked areas give no cameras',function(){
   var s=Sug.suggest(rect,[]);assert.strictEqual(s.cams.length,0);assert.strictEqual(s.unmarked,1);
 });
-t('T-junction: divider adds 2 corners per end (8 total, none at straight wall)',function(){
+t('T-junction: two rooms, no more than 3 each',function(){
   var h=rect.concat([L(200,40,200,250)]);
+  assert.strictEqual(Sug.corners(h).length,12);   // 4 rect corners x2 wedges + 2 T-junctions x2 wedges, straight walls skipped
   var s=Sug.suggest(h,[{x:130,y:150,t:'in'},{x:270,y:150,t:'in'}]);
-  assert.strictEqual(s.cams.length,8);
+  assert(s.cams.length>=2&&s.cams.length<=6,s.cams.length);
 });
 t('crossing walls (X, no shared endpoint) produce corners',function(){
   var x=[L(100,200,300,200),L(200,100,200,300)];
   assert.strictEqual(Sug.corners(x).length,4);
+});
+t('outside (open) is not capped at 3',function(){
+  var s=Sug.suggest(rect,[{x:20,y:20,t:'out'}]);assert.strictEqual(s.cams.length,4);
 });
 t('cap limits indoor cameras',function(){
   var s=Sug.suggest(rect,[{x:200,y:150,t:'in'}],{cap:{in:2}});
