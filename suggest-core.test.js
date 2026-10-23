@@ -48,6 +48,28 @@ t('crossing walls (X, no shared endpoint) produce corners',function(){
 t('outside (open) is not capped at 3',function(){
   var s=Sug.suggest(rect,[{x:20,y:20,t:'out'}]);assert.strictEqual(s.cams.length,4);
 });
+
+t('outdoor area always gets at least 1 camera, even with an outdoor cap of 0',function(){
+  var s=Sug.suggest(rect,[{x:20,y:20,t:'out'}],{cap:{out:0}});
+  assert.strictEqual(s.cams.length,1);assert.strictEqual(s.cams[0].t,'out');
+  assert(s.cams[0].x<60||s.cams[0].x>340||s.cams[0].y<40||s.cams[0].y>250);
+});
+t('no outdoor area marked: outdoor cap of 0 gives 0 outdoor cameras',function(){
+  var s=Sug.suggest(rect,[{x:200,y:150,t:'in'}],{cap:{out:0}});
+  assert.strictEqual(s.cams.filter(function(c){return c.t==='out';}).length,0);
+});
+t('enclosed outdoor area (courtyard) with cap 0 gets 1 camera, inside it',function(){
+  var s=Sug.suggest(rect,[{x:200,y:150,t:'out'}],{cap:{out:0}});
+  assert.strictEqual(s.cams.length,1);assert(s.cams[0].x>60&&s.cams[0].x<340&&s.cams[0].y>40&&s.cams[0].y<250);
+});
+t('outdoor area with no walls at all: 1 fallback camera at the marked point',function(){
+  var s=Sug.suggest([],[{x:200,y:200,t:'out'}]);
+  assert.strictEqual(s.cams.length,1);assert.strictEqual(s.cams[0].x,200);
+});
+t('outdoor area next to one lone wall: fallback camera sits beside the wall, facing away',function(){
+  var s=Sug.suggest([L(100,100,300,100)],[{x:200,y:150,t:'out'}],{cap:{out:0}});
+  assert.strictEqual(s.cams.length,1);assert(Math.abs(s.cams[0].y-100)<12,JSON.stringify(s.cams[0]));
+});
 t('cap limits indoor cameras',function(){
   var s=Sug.suggest(rect,[{x:200,y:150,t:'in'}],{cap:{in:2}});
   assert.strictEqual(s.cams.length,2);

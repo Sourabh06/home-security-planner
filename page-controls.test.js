@@ -1,0 +1,34 @@
+const {JSDOM}=require('jsdom');const fs=require('fs');const assert=require('assert');
+const html=fs.readFileSync(process.argv[2]||'flat_camera_coverage_floor_plan.html','utf8');
+const errs=[];
+const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'http://localhost/',
+ beforeParse(w){w.addEventListener('error',e=>errs.push(e.message));w.scrollTo=()=>{};
+  w.Element.prototype.getBoundingClientRect=function(){return {left:0,top:0,width:520,height:520,right:520,bottom:520};};}});
+const w=dom.window,d=w.document,$=id=>d.getElementById(id);
+const ev=(t,x,y)=>{const e=new w.Event(t,{bubbles:true});e.clientX=x;e.clientY=y;e.pointerId=1;return e;};
+const tap=(x,y)=>{$('canvas').dispatchEvent(ev('pointerdown',x,y));$('canvas').dispatchEvent(ev('pointerup',x,y));};
+const drag=(a,b,c,e)=>{$('canvas').dispatchEvent(ev('pointerdown',a,b));$('canvas').dispatchEvent(ev('pointermove',c,e));$('canvas').dispatchEvent(ev('pointerup',c,e));};
+const T=n=>d.querySelector('[data-tool="'+n+'"]');
+const view=()=>{const m=/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/.exec($('world').getAttribute('transform'));return {x:+m[1],y:+m[2],s:+m[3]};};
+const S=(x,y)=>{const v=view();return [v.x+x*v.s,v.y+y*v.s];};
+let n=0;const ok=(name,f)=>{f();n++;console.log('ok  '+name);};
+
+ok('example view: sliders enabled (the example has cameras)',()=>{assert(!$('fov').disabled&&!$('rng').disabled);});
+$('swCustom').click();
+ok('empty plan: Aim, Erase and both sliders disabled',()=>{assert(T('aim').disabled&&T('erase').disabled&&$('fov').disabled&&$('rng').disabled);});
+ok('empty plan: Line, Text, In, Out, Pan, Suggest stay enabled',()=>{['line','text','in','out','pan','suggest'].forEach(t=>assert(!T(t).disabled,t));});
+T('line').click();let a=S(100,100),b=S(200,100);drag(a[0],a[1],b[0],b[1]);
+ok('one line drawn: Erase enabled, Aim and sliders still disabled',()=>{assert(!T('erase').disabled&&T('aim').disabled&&$('fov').disabled&&$('rng').disabled);});
+T('in').click();let p=S(120,120);tap(p[0],p[1]);
+ok('one camera placed: Aim and sliders enabled',()=>{assert(!T('aim').disabled&&!$('fov').disabled&&!$('rng').disabled);});
+T('aim').click();
+ok('Aim can be selected',()=>{assert.strictEqual(T('aim').getAttribute('aria-pressed'),'true');});
+$('btnUndo').click();
+ok('undo the camera while in Aim: falls back to Line, Aim and sliders disabled',()=>{assert.strictEqual(T('line').getAttribute('aria-pressed'),'true');assert(T('aim').disabled&&$('fov').disabled);});
+T('erase').click();let m=S(150,100);tap(m[0],m[1]);
+ok('erase the last line: Erase disables and tool falls back to Line',()=>{assert(T('erase').disabled);assert.strictEqual(T('line').getAttribute('aria-pressed'),'true');});
+$('swExample').click();
+ok('back to the example plan: sliders enabled again',()=>{assert(!$('fov').disabled&&!$('rng').disabled);});
+$('swCustom').click();
+ok('custom plan, no cameras: sliders disabled again',()=>{assert($('fov').disabled);});
+console.log('errors:',errs);assert.strictEqual(errs.length,0);console.log(n+' checks passed');

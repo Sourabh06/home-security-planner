@@ -118,6 +118,8 @@ input[type=range]{
 }
 input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--border-strong)}
 input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--border-strong)}
+input[type=range]:disabled{opacity:.4;cursor:default}
+.tools button:disabled{opacity:.4;cursor:default}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:26px;height:26px;border-radius:50%;
   margin-top:-11px;background:var(--surface-2);border:1px solid var(--border-strong);
@@ -413,7 +415,7 @@ function zoneRegion(g,lab,z){
 
 /* Everything the UI needs for step 1 (the nudge). */
 function analyze(lines,zones){
-  var g=rasterize(lines),lab=label(g),i,r,areas=[],info=[],type={},conflict={},unmarked=0;
+  var g=rasterize(lines),lab=label(g),i,r,areas=[],info=[],type={},conflict={},seed={},unmarked=0;
   zones=zones||[];
   for(i=0;i<zones.length;i++){
     r=zoneRegion(g,lab,zones[i]);
@@ -421,6 +423,7 @@ function analyze(lines,zones){
     info.push({region:r,stale:false,open:lab.regions[r].open});
     if(type[r]&&type[r]!==zones[i].t)conflict[r]=true;
     type[r]=zones[i].t;
+    if(!seed[r])seed[r]={x:zones[i].x,y:zones[i].y};
   }
   for(i=0;i<lab.regions.length;i++){
     r=lab.regions[i];
@@ -428,7 +431,7 @@ function analyze(lines,zones){
     if(!type[i])unmarked++;
     areas.push({id:i,x:r.ax,y:r.ay,count:r.count,type:type[i]||null,conflict:!!conflict[i]});
   }
-  return {g:g,lab:lab,areas:areas,zoneInfo:info,unmarked:unmarked,type:type,conflict:conflict};
+  return {g:g,lab:lab,areas:areas,zoneInfo:info,unmarked:unmarked,type:type,conflict:conflict,seed:seed};
 }
 
 /* ---- corners ---- */
@@ -515,6 +518,31 @@ function pickGreedy(pool,cap){
   return out;
 }
 
+/* Last resort for an outdoor area with no usable corner: a spot next to the nearest wall, facing away
+   from it. With no walls at all, the point the user marked. */
+function wallFallback(g,lab,r,seed){
+  var best=null,bd=1e9,x,y,dx,dy,vx,vy,any,nx,ny,px,py,d;
+  for(y=0;y<N;y++){
+    for(x=0;x<N;x++){
+      if(g[y*N+x]||lab.reg[y*N+x]!==r)continue;
+      vx=0;vy=0;any=false;
+      for(dy=-1;dy<=1;dy++){
+        for(dx=-1;dx<=1;dx++){
+          if(!dx&&!dy)continue;
+          nx=x+dx;ny=y+dy;
+          if(nx<0||ny<0||nx>=N||ny>=N)continue;
+          if(g[ny*N+nx]){vx-=dx;vy-=dy;any=true;}
+        }
+      }
+      if(!any)continue;
+      px=x*C+C/2;py=y*C+C/2;d=Math.hypot(px-seed.x,py-seed.y);
+      if(d<bd){bd=d;best={x:px,y:py,a:Math.round(angDeg(vx,vy))};}
+    }
+  }
+  if(!best)return {t:'out',x:seed.x,y:seed.y,a:90,r:r};
+  return {t:'out',x:best.x,y:best.y,a:best.a,r:r};
+}
+
 /* ---- step 2: suggestions ----
    opts: {fov:deg, range:world units, cap:{in:n,out:n} (optional)} */
 function suggest(lines,zones,opts){
@@ -531,7 +559,7 @@ function suggest(lines,zones,opts){
     if(!t)return;
     if(A.conflict[r]){skippedMixed++;return;}
     if(t==='in'&&c.size>=179)return;                             // indoor cameras sit in inner corners only
-    var cam={t:t,x:+(c.x+8*cos).toFixed(1),y:+(c.y+8*sin).toFixed(1),a:Math.round(c.bis)};
+    var cam={t:t,x:+(c.x+8*cos).toFixed(1),y:+(c.y+8*sin).toFixed(1),a:Math.round(c.bis),r:r};
     cands.push({cam:cam,region:r,cells:cover(cam,lab,r,fov,range)});
   });
   /* A closed space gets at most MAX_ROOM cameras, chosen by how much new floor they cover.
@@ -548,6 +576,16 @@ function suggest(lines,zones,opts){
     var cap=opts.cap&&opts.cap[t]!==undefined?opts.cap[t]:Infinity;
     if(cap<pool.length)pool=pickGreedy(pool.slice(),cap);
     pool.forEach(function(c){result.push(c.cam);});
+  });
+  /* Every area marked Out gets at least one camera, even when the cart limit is used up. */
+  Object.keys(A.type).forEach(function(k){
+    var r=+k;
+    if(A.type[r]!=='out'||A.conflict[r])return;
+    if(!lab.regions[r].open&&lab.regions[r].count<MIN_CELLS)return;
+    if(result.some(function(c){return c.t==='out'&&c.r===r;}))return;
+    var pool=cands.filter(function(c){return c.region===r&&c.cam.t==='out';});
+    var pick=pool.length?(pickGreedy(pool.slice(),1)[0]||pool[0]).cam:wallFallback(g,lab,r,A.seed[r]);
+    result.push(pick);
   });
   return {cams:result,unmarked:A.unmarked,mixedAreas:skippedMixed,analysis:A};
 }
@@ -604,6 +642,7 @@ function updButtons(){
   $('btnUndo').disabled=!undoS.length;
   $('btnRedo').disabled=!redoS.length;
   $('btnClear').disabled=!(st.lines.length||st.texts.length||st.cams.length||st.zones.length);
+  updToolState();
   schedulePersist();
 }
 
@@ -691,7 +730,7 @@ function sugCompute(){
   res.cams=res.cams.filter(function(g){
     return !st.cams.some(function(c){return Math.hypot(c.x-g.x,c.y-g.y)<12;});
   });
-  SUG={key:key,res:res,A:res.analysis,cart:cart};
+  SUG={key:key,res:res,A:res.analysis,cart:cart,cap:cap};
   return SUG;
 }
 function chipGroup(x,y){
@@ -768,6 +807,7 @@ function renderSuggestLayer(){
   if(mixed)msg.push('An area has both indoor and outdoor marks. Tap its label to reset it.');
   if(nm)msg.push(cams.length?'Suggested: '+ni+' indoor, '+no+' outdoor (dashed), at most 3 per closed space. Tap one to place it.':'No new corners to suggest in the marked areas.');
   if(S.cart)msg.push('Your cart has '+S.cart['in']+' indoor, '+S.cart.out+' outdoor, so suggestions are limited to what is left of that.');
+  if(S.cart&&S.cap&&no>S.cap.out)msg.push('An area marked Out always gets at least one outdoor camera, even if that is more than your cart has left.');
   $('sugMsg').textContent=msg.join(' ');
   $('sugPlace').textContent='Place all ('+cams.length+')';
   $('sugPlace').disabled=!cams.length;
@@ -821,6 +861,22 @@ $('sugClear').onclick=function(){
   pushUndo();st.zones=[];pendingOpen=null;
   renderCustom();updButtons();
 };
+
+/* Aim and Erase need something to act on; the Field of view and Range sliders need a camera (Your plan view only). */
+function updToolState(){
+  var hasCams=st.cams.length>0,empty=!(st.lines.length||st.texts.length||st.cams.length);
+  var aim=document.querySelector('[data-tool="aim"]'),er=document.querySelector('[data-tool="erase"]');
+  aim.disabled=!hasCams;er.disabled=empty;
+  aim.title=hasCams?'':'Place a camera first';er.title=empty?'':'';
+  if(empty)er.title='Nothing to erase yet';
+  var custom=!$('viewCustom').hidden;
+  $('fov').disabled=$('rng').disabled=custom&&!hasCams;
+  $('fov').title=$('rng').title=($('fov').disabled?'Place a camera first':'');
+  if((tool==='aim'&&!hasCams)||(tool==='erase'&&empty)){
+    document.querySelector('[data-tool="line"]').click();
+    say(tool==='line'?'Switched to Line: nothing left to '+(empty?'erase':'aim')+'.':'');
+  }
+}
 
 /* Hit testing (world coords; tolerances scaled to screen) */
 function hit(p){
@@ -1148,6 +1204,7 @@ function showView(custom){
   }else{
     cancelPending();
   }
+  updToolState();
   window.scrollTo(0,0);
 }
 $('swExample').onclick=function(){showView(false);};
