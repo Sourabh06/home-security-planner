@@ -6,7 +6,7 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
 
 ## Features
 
-- **Cost estimation:** budget slider and text input; choose HD camera + DVR or IP camera + NVR; wired, wired and WiFi cameras can be mixed in one estimate; add dome, bullet and turret cameras in any mix. The cost table updates live and stops you adding cameras that would exceed the budget or the recorder limit (4 for DVR, 7 for NVR).
+- **Cost estimation:** budget slider and text input; choose HD camera + DVR or IP camera + NVR; wired, wired and WiFi cameras can be mixed in one estimate; add dome, bullet and turret cameras in any mix. The cost table updates live and stops you adding cameras that would exceed the budget or the recorder limit (4 for DVR, 7 for NVR). In the cart, each camera row has **−** and **+** buttons (**+** obeys the same budget and recorder limits), a trash icon to remove the whole entry, and a **Clear cart** button that empties every cart after you confirm.
 - **Visualize (2D):** the floor-plan coverage tool is embedded in the main page. Draw walls, place indoor and outdoor cameras and see their coverage cones. The Aim and Erase tools and the Field of view and Range sliders stay disabled until the plan has something for them to act on (Aim and the sliders need a camera, Erase needs at least one line, label or camera).
 - **Suggest cameras (2D, experimental):** after you draw your walls, the **Suggest** tool proposes camera positions at the corners of your plan. Suggestions are a starting point and can be wrong, so check each one.
   1. Tap **Suggest**. Each closed area shows "In or out?". Tap **In** or **Out** to mark it. To mark the outside, tap an empty spot outside the walls, then **Out**. Tap an area's label again to change it (In, Out, then unmarked).
@@ -17,7 +17,7 @@ A static website for planning a home CCTV setup: set a budget, mix camera types,
   - **Open areas:** an area that is not closed (for example a doorway left as a gap) is flagged with ⚠. Close the gap with a line, or keep it as marked.
   - **Clear marks** removes all In/Out marks. If you change the walls afterwards, marks that no longer sit in an area are reported and can be cleared the same way.
   - **Limits:** coverage cones still pass through walls, areas must be closed to be detected, and there are no dome, bullet or turret types in the 2D tool, only indoor and outdoor.
-- **Visualize (3D):** opens the WebXR page, where you mount cameras on a real wall through your phone camera.
+- **Visualize (3D):** opens the WebXR page, where you mount cameras on a real wall through your phone camera. Its start screen has a **Back to planner** link.
 - **Know your camera:** a collapsed, plain-language infographic where every point opens and closes with a chevron explaining camera types (including indoor and PTZ), DVR vs NVR, connection types and the terms used in the form. It is built from plain HTML and CSS and only added to the page when opened, so it does not slow the page load.
 - **Additional information:** a separate page (`additional-info.html`) with IP and IK ratings, India's STQC rule, STQC-certified brands, storage sizing, H.265+ encoding, battery cameras, SIM and SD card options, phone and web viewing, ONVIF and RTSP, alarms and image recognition, privacy and safety, and DORI with a calculator link.
 - The cost estimate is optional. You can go straight to Visualize.

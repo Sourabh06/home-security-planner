@@ -18,6 +18,7 @@
   #start p { margin: 0; color: var(--muted); line-height: 1.5; }
   #startBtn { padding: 16px; font-size: 1.05rem; font-weight: 700; border: 0; border-radius: 10px;
     background: var(--accent); color: #05201f; flex: none; }
+  .back { display: inline-flex; align-items: center; align-self: flex-start; min-height: 44px; font-weight: 600; color: var(--accent); text-decoration: none; flex: none; }
   #startBtn[disabled] { background: #2a343c; color: var(--muted); }
   #msg { color: var(--danger); min-height: 1.4em; font-size: .92rem; }
   [hidden] { display: none !important; }
@@ -63,6 +64,7 @@
 <body>
 
 <div id="start">
+  <a class="back" href="../index.html">← Back to planner</a>
   <h1>Wall cameras in AR</h1>
   <p>Point your phone at a wall and tap to mount a camera. The translucent beam shows the area each camera can see. Adjust the view angle, range and color per camera.</p>
     <figure class="walk">

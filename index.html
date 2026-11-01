@@ -32,6 +32,9 @@ button:disabled{opacity:.4;cursor:not-allowed}
 svg *{stroke:currentColor;fill:none;stroke-width:1.6}svg .f{fill:currentColor;stroke:none}
 .crow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);font-size:.88rem}
 .stp{display:flex;align-items:center;gap:8px}.stp button{width:44px;text-align:center;font-size:1.1rem}
+.stp b{min-width:1.6ch;text-align:center}.stp button.del{display:inline-flex;align-items:center;justify-content:center;padding:0;color:var(--bad)}.stp button.del svg{width:20px;height:20px}
+.clr{display:inline-flex;align-items:center;gap:6px;min-height:44px;margin-top:8px;padding:0 14px;border:1px solid var(--bad);border-radius:10px;background:transparent;color:var(--bad);font:inherit;font-size:.9rem;font-weight:600;cursor:pointer}.clr svg{width:18px;height:18px}
+#cart:focus{outline:none}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:520px){.row2,.budget{grid-template-columns:1fr}}
 table{width:100%;border-collapse:collapse;font-size:.84rem}
@@ -193,7 +196,8 @@ details.adv{margin-top:12px;border-top:1px solid var(--bd);padding-top:4px}
     <h3 class="gh">WiFi cameras</h3>
     <div class="add" id="addW"></div>
     <p class="msg" id="addNote" hidden></p>
-    <div id="cart" style="margin-top:8px"></div>
+    <div id="cart" style="margin-top:8px" tabindex="-1"></div>
+    <button type="button" class="clr" id="clearCart" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>Clear cart</button>
     <details class="adv" id="adv"><summary>Cabling (optional)</summary>
       <div class="row2" style="margin-top:8px" id="runBox">
         <div><label class="l" for="run">Average cable run per camera (m)</label><input type="number" id="run" min="1" value="15" inputmode="numeric"></div>
@@ -249,6 +253,7 @@ var PL=[['dvr_nv','DVR · night vision + audio 2 MP dome'],['dvr_ir','DVR · IR 
 var ICON={dome:'<svg viewBox="0 0 34 20"><rect x="4" y="2" width="26" height="3" rx="1"/><path class="f" d="M9 5h16a8 8 0 0 1-16 0z"/></svg>',
 bullet:'<svg viewBox="0 0 34 20"><rect x="3" y="1" width="3" height="18" rx="1"/><rect x="9" y="5" width="22" height="10" rx="5"/><circle class="f" cx="26" cy="10" r="3"/></svg>',
 turret:'<svg viewBox="0 0 34 20"><rect x="5" y="2" width="24" height="3" rx="1"/><rect x="8" y="5" width="18" height="5" rx="2"/><path class="f" d="M13 10h8a4 4 0 0 1-8 0z"/></svg>'};
+var TRASH='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
 var CAT={
  dvr:[{id:'nv',f:'dome',n:'Night vision + audio 2 MP dome',k:'dvr_nv'},{id:'ir',f:'dome',n:'IR + audio 2 MP dome',k:'dvr_ir'},
       {id:'bu',f:'bullet',n:'2 MP audio HD bullet (est.)',k:'dvr_bul'},{id:'tu',f:'turret',n:'2 MP audio HD turret (est.)',k:'dvr_tur'}],
@@ -286,14 +291,20 @@ function setSeg(k,val){Array.prototype.forEach.call(document.querySelector('.seg
 
 /* combined total (wired cart of the chosen system + WiFi cart), optionally with one extra camera */
 function tot(ek,eid){return calc(S.sys,ek===S.sys?eid:undefined).total+calc('wl',ek==='wl'?eid:undefined).total;}
+/* Why a camera of this type cannot be added right now ('' when it can). Used by the add buttons and the cart's "+". */
+function whyNot(kk,it,cnt){
+  var u=P[it.k],t=u>0?tot(kk,it.id):0;
+  if(!(u>0))return 'Set a price in "Edit price list"';
+  if(cnt>=CAP[kk])return 'Limit of '+CAP[kk]+' cameras reached';
+  if(t>S.budget)return 'Would exceed budget (total '+inr(t)+')';
+  return '';
+}
+function attr(t){return String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;');}
 function addBtns(kk){
   var h='',cnt=calc(kk).n;
   CAT[kk].forEach(function(it){
-    var u=P[it.k],why='',t=u>0?tot(kk,it.id):0;
-    if(!(u>0))why='Set a price in "Edit price list"';
-    else if(cnt>=CAP[kk])why='Limit of '+CAP[kk]+' cameras reached';
-    else if(t>S.budget)why='Would exceed budget (total '+inr(t)+')';
-    h+='<button type="button" data-cart="'+kk+'" data-add="'+it.id+'"'+(why?' disabled title="'+why+'"':'')+'>'+ICON[it.f]+'+ '+it.n+'<small>'+(u>0?inr(u)+' each':'no price set')+'</small></button>';
+    var u=P[it.k],why=whyNot(kk,it,cnt);
+    h+='<button type="button" data-cart="'+kk+'" data-add="'+it.id+'"'+(why?' disabled title="'+attr(why)+'"':'')+'>'+ICON[it.f]+'+ '+it.n+'<small>'+(u>0?inr(u)+' each':'no price set')+'</small></button>';
   });
   return h;
 }
@@ -327,8 +338,10 @@ function render(){
   /* cart */
   var c='';
   [k,'wl'].forEach(function(kk){CAT[kk].forEach(function(it){var q=S.carts[kk][it.id]||0;if(!q)return;
-    c+='<div class="crow"><span>'+ICON[it.f].replace('<svg','<svg style="width:30px;height:18px;vertical-align:middle;margin-right:8px"')+(kk==='wl'?'':'Wired · ')+it.n+' · '+inr(P[it.k])+'</span><span class="stp"><button type="button" data-cart="'+kk+'" data-dec="'+it.id+'" aria-label="Remove one">−</button><b>'+q+'</b></span></div>';});});
+    var w=whyNot(kk,it,kk==='wl'?cf.n:cw.n);
+    c+='<div class="crow"><span>'+ICON[it.f].replace('<svg','<svg style="width:30px;height:18px;vertical-align:middle;margin-right:8px"')+(kk==='wl'?'':'Wired · ')+it.n+' · '+inr(P[it.k])+'</span><span class="stp"><button type="button" data-cart="'+kk+'" data-dec="'+it.id+'" aria-label="Remove one">−</button><b>'+q+'</b><button type="button" data-cart="'+kk+'" data-inc="'+it.id+'" aria-label="Add one"'+(w?' disabled title="'+attr(w)+'"':'')+'>+</button><button type="button" class="del" data-cart="'+kk+'" data-del="'+it.id+'" aria-label="Remove all '+attr(it.n)+'" title="Remove all">'+TRASH+'</button></span></div>';});});
   $('cart').innerHTML=c||'<p style="font-size:.85rem;color:var(--mut)">No cameras added yet.</p>';
+  $('clearCart').hidden=!(cw.n+cf.n);
 
   /* table */
   var r='<tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>';
@@ -367,7 +380,24 @@ $('budgetNum').addEventListener('input',function(){S.budget=num(this.value,0);$(
 $('budgetNum').addEventListener('blur',function(){this.value=S.budget;});
 Array.prototype.forEach.call(document.querySelectorAll('.seg'),function(g){g.addEventListener('click',function(e){var b=e.target.closest('button');if(b){S[g.dataset.k]=b.dataset.v;render();}});});
 ['add','addW'].forEach(function(id){$(id).addEventListener('click',function(e){var b=e.target.closest('button[data-add]');if(!b||b.disabled)return;var c=S.carts[b.dataset.cart];c[b.dataset.add]=(c[b.dataset.add]||0)+1;render();});});
-$('cart').addEventListener('click',function(e){var b=e.target.closest('button[data-dec]');if(!b)return;var c=S.carts[b.dataset.cart],i=b.dataset.dec;c[i]=(c[i]||1)-1;if(c[i]<=0)delete c[i];render();});
+$('cart').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b||b.disabled)return;
+  var kk=b.dataset.cart,c=S.carts[kk],id=b.dataset.dec||b.dataset.inc||b.dataset.del;if(!c||!id)return;
+  if(b.dataset.dec){c[id]=(c[id]||1)-1;if(c[id]<=0)delete c[id];}
+  else if(b.dataset.inc){c[id]=(c[id]||0)+1;}
+  else delete c[id];
+  render();
+  /* the list is redrawn, so put keyboard focus back on a sensible control */
+  var again=document.querySelector('#cart button[data-cart="'+kk+'"][data-'+(b.dataset.dec?'dec':'inc')+'="'+id+'"]');
+  if(b.dataset.del)$('cart').focus();
+  else if(again&&!again.disabled)again.focus();
+  else{var dec=document.querySelector('#cart button[data-cart="'+kk+'"][data-dec="'+id+'"]');(dec||$('cart')).focus();}
+});
+$('clearCart').addEventListener('click',function(){
+  if(!window.confirm('Clear all cameras from your cart?'))return;
+  ['dvr','nvr','wl'].forEach(function(k){S.carts[k]={};});
+  render();$('cart').focus();
+});
 $('run').addEventListener('input',function(){S.run=Math.max(1,num(this.value,15));render();});
 $('conduit').addEventListener('input',function(){S.conduit=num(this.value,1);render();});
 $('wireSel').addEventListener('change',function(){S.wire=this.value;render();});
