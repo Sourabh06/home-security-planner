@@ -1,4 +1,4 @@
-/* Cart controls on index.html (+, trash, Clear cart) and the Back link on the 3D page.
+/* Cart controls, pagination (Step 1, Step 2, Step 3, and separate What's coming page), auto-navigation from Your Plan, and Sneak Peek links on index.html.
    Needs jsdom: npm i jsdom. Run: node tests/cart-controls.test.js [path/to/index.html] */
 const {JSDOM}=require('jsdom'),fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.join(__dirname,'..');
@@ -15,6 +15,55 @@ const saved=()=>JSON.parse(w.localStorage.getItem('cameraPlanner.v3')).carts;
 const addBtn=(box,id)=>d.querySelector('#'+box+' button[data-add="'+id+'"]');
 const sys=v=>click(d.querySelector('.seg[data-k="sys"] button[data-v="'+v+'"]'));
 let n=0;const ok=(name,f)=>{f();n++;console.log('ok  '+name);};
+
+ok('pagination: starts on Step 1 (Draw my house) with Step 2, Step 3 and What\'s coming hidden',()=>{
+  assert.strictEqual($('tab1').getAttribute('aria-current'),'step');
+  assert.strictEqual($('s2').hidden,false);
+  assert.strictEqual($('page1Head').hidden,false);
+  assert.strictEqual($('page2Head').hidden,true);
+  assert.strictEqual($('s1').hidden,true);
+  assert.strictEqual($('whatsComing').hidden,true);
+  assert.strictEqual($('footerComingBtn'),null);
+});
+w.onEnterCustomPlan();
+ok('auto-navigation: clicking Your plan / Try out your floor plan auto-navigates to Step 2 (Camera & blind spots)',()=>{
+  assert.strictEqual($('tab2').getAttribute('aria-current'),'step');
+  assert.strictEqual($('s2').hidden,false);
+  assert.strictEqual($('page1Head').hidden,true);
+  assert.strictEqual($('page2Head').hidden,false);
+  assert.strictEqual($('s1').hidden,true);
+  assert.strictEqual($('whatsComing').hidden,true);
+});
+click($('nextTo3'));
+ok('pagination: Next moves to Step 3 (Costs), keeping What\'s coming hidden',()=>{
+  assert.strictEqual($('tab3').getAttribute('aria-current'),'step');
+  assert.strictEqual($('s2').hidden,true);
+  assert.strictEqual($('s1').hidden,false);
+  assert.strictEqual($('whatsComing').hidden,true);
+});
+click($('topComingBtn'));
+ok('What\'s coming is a separate page: clicking it shows What\'s coming and hides the Costs page',()=>{
+  assert.strictEqual($('topComingBtn').getAttribute('aria-current'),'step');
+  assert.strictEqual($('s2').hidden,true);
+  assert.strictEqual($('s1').hidden,true);
+  assert.strictEqual($('whatsComing').hidden,false);
+});
+click($('backTo3'));
+ok('pagination: Back from What\'s coming returns to Step 3 (Costs)',()=>{
+  assert.strictEqual($('tab3').getAttribute('aria-current'),'step');
+  assert.strictEqual($('s1').hidden,false);
+  assert.strictEqual($('whatsComing').hidden,true);
+});
+click($('backTo2'));
+ok('pagination: Back from Step 3 returns to Step 2',()=>{
+  assert.strictEqual($('tab2').getAttribute('aria-current'),'step');
+  assert.strictEqual($('page2Head').hidden,false);
+});
+click($('backTo1'));
+ok('pagination: Back from Step 2 returns to Step 1',()=>{
+  assert.strictEqual($('tab1').getAttribute('aria-current'),'step');
+  assert.strictEqual($('page1Head').hidden,false);
+});
 
 ok('empty cart: no Clear cart button',()=>{assert.strictEqual($('clearCart').hidden,true);assert.strictEqual(rows().length,0);});
 click(addBtn('add','nv'));
@@ -60,8 +109,30 @@ click(addBtn('add','nv'));click(rows()[0].querySelector('[data-inc]'));
 ok('keyboard focus stays on the + button after pressing it',()=>{assert.strictEqual(d.activeElement,rows()[0].querySelector('[data-inc]'));});
 click(rows()[0].querySelector('[data-del]'));
 ok('keyboard focus moves to the cart list after the trash button',()=>{assert.strictEqual(d.activeElement,$('cart'));});
-ok('3D page start screen links back to the planner',()=>{
+
+/* Test Auto-populate from Page 2 */
+w.localStorage.setItem('flatCameraPlan.v1',JSON.stringify({
+  app:'flat-camera-coverage',version:2,lines:[],texts:[],zones:[],
+  cams:[{t:'in',x:80,y:80,a:90},{t:'in',x:200,y:80,a:90},{t:'out',x:40,y:40,a:180}],
+  settings:{showCones:true,fov:100,rng:100}
+}));
+click($('autoPopBtn'));
+ok('Auto-populate from 2D plan populates indoor and outdoor cameras into cart',()=>{
+  const c=saved();
+  assert.strictEqual(c.dvr.nv,2);
+  assert.strictEqual(c.dvr.bu,1);
+  assert.strictEqual(rows().length,2);
+});
+
+ok('Sneak peek: Camera primer and 3D AR links exist and point to valid standalone pages',()=>{
+  const sp=$('sneakPrimer'),arLink=$('l3d');
+  assert(sp&&sp.getAttribute('href')==='primer.html');
+  assert(arLink&&arLink.getAttribute('href')==='google-ar/wall-cameras-ar.html');
+  assert(fs.existsSync(path.join(root,'primer.html')));
+  const pr=new JSDOM(fs.readFileSync(path.join(root,'primer.html'),'utf8')).window.document;
+  assert(pr.querySelector('a.back[href="index.html"]'));
   const ar=new JSDOM(fs.readFileSync(path.join(root,'google-ar','wall-cameras-ar.html'),'utf8')).window.document;
   const a=ar.querySelector('#start a.back');assert(a);assert.strictEqual(a.getAttribute('href'),'../index.html');
-  assert(fs.existsSync(path.join(root,'google-ar',a.getAttribute('href'))));});
+  assert(fs.existsSync(path.join(root,'google-ar',a.getAttribute('href'))));
+});
 console.log('errors:',errs);assert.strictEqual(errs.length,0);console.log(n+' checks passed');

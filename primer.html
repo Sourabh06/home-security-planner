@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Know your camera · Camera planner</title>
+<style>
+:root{--bg:#f9f9f7;--s1:#fcfcfb;--s2:#fff;--tx:#0b0b0b;--tx2:#52514e;--mut:#898781;--bd:rgba(11,11,11,.1);--bd2:rgba(11,11,11,.22);--ac:#2a78d6;--acbg:rgba(42,120,214,.14)}
+@media(prefers-color-scheme:dark){:root{--bg:#0b0b0b;--s1:#1a1a19;--s2:#242423;--tx:#f0efec;--tx2:#c3c2b7;--bd:rgba(255,255,255,.12);--bd2:rgba(255,255,255,.25);--ac:#6da7ec;--acbg:rgba(109,167,236,.2)}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);line-height:1.5;padding:16px max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));padding-top:max(16px,env(safe-area-inset-top))}
+main{max-width:800px;margin:0 auto}
+h1{font-size:1.35rem;margin:10px 0 4px}
+a{color:var(--ac)}
+.back{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-decoration:none}
+.badge{display:inline-block;font-size:.75rem;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--acbg);color:var(--ac);margin-left:8px;vertical-align:middle}
+.lead{color:var(--tx2);font-size:.95rem;margin-bottom:12px}
+.card{background:var(--s1);border:1px solid var(--bd2);border-radius:12px;padding:14px;margin-bottom:12px}
+#hero{display:block;width:100%;max-width:420px;height:auto;margin:4px auto 12px;color:var(--tx)}
+#hero *{stroke:currentColor;fill:none;stroke-width:1.6;stroke-linejoin:round}#hero .f{fill:currentColor;stroke:none}#hero .b{fill:var(--s2)}#hero text{fill:var(--tx2);stroke:none;font-size:11px;font-family:inherit}
+.ig{font-size:.88rem;line-height:1.45;color:var(--tx2)}
+.ig b{color:var(--tx)}
+.ig details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;font-weight:700;color:var(--tx)}
+.ig details>summary::-webkit-details-marker{display:none}
+.ig details>summary::after{content:"";flex:none;width:8px;height:8px;margin:0 4px 0 auto;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(45deg);transition:transform .15s}
+.ig details[open]>summary::after{transform:rotate(-135deg)}
+@media(prefers-reduced-motion:reduce){.ig details>summary::after{transition:none}}
+.ig-s{border-bottom:1px solid var(--bd)}
+.ig-s:last-of-type{border-bottom:0}
+.ig-s>summary{font-size:1rem}
+.ig-s>summary i{font-style:normal;display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#fff;font-size:.8rem}
+.ig-b{padding:2px 0 14px}
+.ig-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:start}
+.ig-c,.ig-lane,.ig-term{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:0 10px}
+.ig-c>summary,.ig-lane>summary,.ig-term>summary{font-size:.88rem}
+.ig-c svg{width:44px;height:26px;flex:none;color:var(--tx)}
+.ig-c svg *{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.ig-c svg .f{fill:currentColor;stroke:none}
+.ig-d{padding:0 0 10px}
+.ig-p{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--acbg);color:var(--ac);margin:6px 4px 0 0}
+.ig-lane{margin-bottom:8px}
+.ig-f{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 4px}
+.ig-n{padding:6px 9px;border-radius:8px;border:1px solid var(--bd2);background:var(--s1);color:var(--tx);font-size:.8rem;text-align:center}
+.ig-a{font-size:.68rem;color:var(--mut);text-align:center;line-height:1.1}
+.ig-t{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;align-items:start}
+.ig-go{display:flex;align-items:center;min-height:48px;margin-top:16px;padding:12px;border:1px solid var(--bd2);border-radius:10px;background:var(--s2);color:var(--ac);font-weight:700;text-decoration:none}
+.ig-tip{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--acbg);color:var(--tx)}
+footer{margin-top:24px;padding-top:14px;border-top:1px solid var(--bd2);font-size:.85rem;color:var(--tx2);text-align:center}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="index.html">← Back to planner</a>
+<h1>Know your camera <span class="badge">Sneak peek</span></h1>
+<p class="lead">A plain-language refresher on camera types, recording systems (DVR vs NVR), power and connection options, and common CCTV terms.</p>
+
+<svg id="hero" viewBox="0 0 360 100" role="img" aria-label="Illustration of a dome, a bullet and a turret security camera">
+  <g><rect class="b" x="30" y="14" width="60" height="7" rx="3"/><path class="f" d="M38 21h44a22 22 0 0 1-44 0z"/><text x="60" y="88" text-anchor="middle">Dome</text></g>
+  <g><rect class="b" x="132" y="10" width="7" height="56" rx="3"/><path d="M139 38h12"/><rect class="b" x="151" y="26" width="64" height="26" rx="12"/><circle class="f" cx="203" cy="39" r="8"/><text x="175" y="88" text-anchor="middle">Bullet</text></g>
+  <g><rect class="b" x="260" y="14" width="70" height="7" rx="3"/><rect class="b" x="268" y="21" width="54" height="13" rx="6"/><path class="f" d="M278 34h34a17 17 0 0 1-34 0z"/><text x="295" y="88" text-anchor="middle">Turret</text></g>
+</svg>
+
+<div class="card" id="primer">
+<div class="ig">
+  <details class="ig-s" open><summary><i>1</i>Which camera goes where?</summary><div class="ig-b"><div class="ig-g">
+    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="4" width="42" height="5" rx="2"/><path class="f" d="M15 9h28a14 14 0 0 1-28 0z"/></svg>Dome</summary><div class="ig-d">Round and low-profile, fixed to a ceiling. Hard to tell where it is pointing.<br><span class="ig-p">Indoor</span><span class="ig-p">Living room, foyer</span></div></details>
+    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="4" y="2" width="4" height="30" rx="2"/><path d="M8 17h8"/><rect x="16" y="9" width="38" height="16" rx="8"/><circle class="f" cx="46" cy="17" r="5"/></svg>Bullet</summary><div class="ig-d">Long tube that sees far in a narrow strip. Easy to spot, which puts people off.<br><span class="ig-p">Outdoor</span><span class="ig-p">Balcony, outer wall</span></div></details>
+    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="3" width="42" height="4" rx="2"/><rect x="13" y="7" width="32" height="8" rx="4"/><path class="f" d="M21 15h16a8 8 0 0 1-16 0z"/></svg>Turret</summary><div class="ig-d">Small ball-shaped camera with a wide view, mounted on a wall or ceiling.<br><span class="ig-p">Indoor</span><span class="ig-p">Door, corridor</span></div></details>
+    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="9" y="4" width="40" height="22" rx="7"/><circle class="f" cx="29" cy="15" r="6"/><path d="M18 30h22"/></svg>Indoor camera</summary><div class="ig-d">Small cube that sits on a shelf or table, or hangs on a wall. Many models turn to follow movement.<br><span class="ig-p">Indoor</span><span class="ig-p">Rooms, nursery</span><span class="ig-p">Not priced here</span></div></details>
+    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="3" width="42" height="4" rx="2"/><path d="M29 7v5"/><circle cx="29" cy="20" r="9"/><circle class="f" cx="29" cy="20" r="4"/><path d="M12 22a17 8 0 0 0 4 4M46 22a17 8 0 0 1-4 4"/></svg>PTZ (Pan-Tilt-Zoom)</summary><div class="ig-d">A motor turns it left and right, tips it up and down, and zooms in. You steer it from a phone, or it follows movement by itself. One PTZ can watch a big area. PTZ can also be a feature of other cameras: many dome and indoor models have pan-tilt, and some have zoom, built in.<br><span class="ig-p">Big areas</span><span class="ig-p">Costs more</span><span class="ig-p">Not priced here</span></div></details>
+  </div></div></details>
+
+  <details class="ig-s"><summary><i>2</i>How does the picture reach the recorder?</summary><div class="ig-b">
+    <details class="ig-lane"><summary>DVR: the "one cable per camera" way</summary><div class="ig-d">
+      <div class="ig-f"><span class="ig-n">Camera</span><span class="ig-a">cable<br>→</span><span class="ig-n">DVR box<br>saves the video</span><span class="ig-a">→</span><span class="ig-n">TV or phone</span></div>
+      <span class="ig-p">Lower cost</span><span class="ig-p">Good picture (2 MP)</span><span class="ig-p">Up to 4 cameras here</span></div></details>
+    <details class="ig-lane"><summary>NVR: the "home internet" way</summary><div class="ig-d">
+      <div class="ig-f"><span class="ig-n">Camera</span><span class="ig-a">network cable<br>(also powers it)<br>→</span><span class="ig-n">Network box<br>(PoE switch)</span><span class="ig-a">→</span><span class="ig-n">NVR box<br>saves the video</span><span class="ig-a">→</span><span class="ig-n">TV or phone</span></div>
+      <span class="ig-p">Costs more</span><span class="ig-p">Sharper picture (4 MP)</span><span class="ig-p">Up to 7 cameras here</span></div></details>
+    <div class="ig-tip"><b>Quick rule:</b> tight budget, a few cameras → DVR. Sharper picture and room to add more later → NVR.</div>
+  </div></details>
+
+  <details class="ig-s"><summary><i>3</i>How does the camera get power and connect?</summary><div class="ig-b"><div class="ig-g">
+    <details class="ig-c"><summary>Wired cable</summary><div class="ig-d">A cable runs from each camera to the recorder.<br><span class="ig-p">Very steady</span><span class="ig-p">Cable must be laid</span></div></details>
+    <details class="ig-c"><summary>PoE cable</summary><div class="ig-d">One network cable carries the picture and the power.<br><span class="ig-p">Neat, one cable</span></div></details>
+    <details class="ig-c"><summary>WiFi camera</summary><div class="ig-d">Sends the picture through your WiFi, but still needs a power socket nearby.<br><span class="ig-p">Weak signal = patchy video</span></div></details>
+    <details class="ig-c"><summary>Battery camera</summary><div class="ig-d">No wires at all. You recharge it, and it often saves short clips instead of recording non-stop.<br><span class="ig-p">Easy to place</span></div></details>
+  </div>
+  <p style="margin-top:8px">This planner has prices for wired and WiFi cameras. Battery cameras are not priced here; you can type your own price under "Edit price list" if you need to.</p></div></details>
+
+  <details class="ig-s"><summary><i>4</i>Words you will see in the form</summary><div class="ig-b"><div class="ig-t">
+    <details class="ig-term"><summary>MP (megapixels)</summary><div class="ig-d">How sharp the picture is. More MP shows faces and details more clearly.</div></details>
+    <details class="ig-term"><summary>IR / night vision</summary><div class="ig-d">Invisible lights let the camera see in the dark. The picture turns black and white.</div></details>
+    <details class="ig-term"><summary>Audio</summary><div class="ig-d">A built-in microphone, so the camera records sound too.</div></details>
+    <details class="ig-term"><summary>Channel</summary><div class="ig-d">One camera socket on the recorder. A 4-channel DVR takes 4 cameras.</div></details>
+    <details class="ig-term"><summary>HDD / SSD</summary><div class="ig-d">The memory that stores recordings. More space keeps more days of video.</div></details>
+    <details class="ig-term"><summary>PoE switch</summary><div class="ig-d">A box that hands out network cables and power to the cameras.</div></details>
+    <details class="ig-term"><summary>Cable run</summary><div class="ig-d">The length of cable from the recorder to the camera.</div></details>
+    <details class="ig-term"><summary>Junction box and conduit</summary><div class="ig-d">A small box that protects cable joints, and a pipe that protects the cable.</div></details>
+    <details class="ig-term"><summary>PTZ</summary><div class="ig-d">Pan-Tilt-Zoom: a motor that turns, tips and zooms the camera. Some dome and indoor cameras offer it as a feature.</div></details>
+    <details class="ig-term"><summary>Indoor / outdoor</summary><div class="ig-d">Outdoor cameras are built for rain and dust. In the 2D plan, bullets count as outdoor.</div></details>
+  </div></div></details>
+  <a class="ig-go" href="additional-info.html">Additional information (IP/IK ratings, STQC, storage, ONVIF) →</a>
+</div>
+</div>
+
+<footer>
+  <a class="back" href="index.html">← Back to planner</a>
+  <div style="margin-top:8px">Made with ❤️ by Sourabh · © 2026 · <a href="https://github.com/Sourabh06/home-security-planner" target="_blank" rel="noopener noreferrer">GitHub</a> · <a href="https://sourabhkumarsingh-portfolio.lovable.app/" target="_blank" rel="noopener noreferrer">Portfolio</a></div>
+</footer>
+</main>
+</body>
+</html>

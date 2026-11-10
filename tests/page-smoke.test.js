@@ -1,5 +1,5 @@
 const {JSDOM}=require('jsdom');const fs=require('fs');
-const html=fs.readFileSync('new.html','utf8');
+const html=fs.readFileSync(process.argv[2]||'flat_camera_coverage_floor_plan.html','utf8');
 const errs=[];
 const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'http://localhost/',
  beforeParse(w){w.addEventListener('error',e=>errs.push(e.message));

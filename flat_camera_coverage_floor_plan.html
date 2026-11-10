@@ -1204,12 +1204,17 @@ function showView(custom){
   }else{
     cancelPending();
   }
+  if(stepMode==="draw"){
+    var sl=document.querySelector(".sliders"),lg=document.querySelector(".legend");
+    if(sl)sl.hidden=custom;
+    if(lg)lg.hidden=custom;
+  }
   updToolState();
   window.scrollTo(0,0);
 }
 $('swExample').onclick=function(){showView(false);};
-$('swCustom').onclick=function(){showView(true);};
-$('tryBtn').onclick=function(){showView(true);};
+$('swCustom').onclick=function(){showView(true);notifyEnterCustomPlan();};
+$('tryBtn').onclick=function(){showView(true);notifyEnterCustomPlan();};
 
 function onSlide(){
   $('fovo').textContent=fovVal()+'°';
@@ -1225,11 +1230,49 @@ window.addEventListener('resize',function(){
   if(!$('viewCustom').hidden&&!viewTouched)fitView();
 });
 
+
+var stepMode="all";
+function notifyEnterCustomPlan(){
+  try{
+    if(window.parent&&window.parent!==window){
+      if(typeof window.parent.onEnterCustomPlan==="function")window.parent.onEnterCustomPlan();
+      else if(window.parent.postMessage)window.parent.postMessage({type:"enterCustomPlan"},"*");
+    }
+  }catch(_){}
+}
+function setPlannerStep(mode){
+  stepMode=(mode==="draw"||mode==="cameras")?mode:"all";
+  var isDraw=(stepMode==="draw"),isCam=(stepMode==="cameras");
+  var sl=document.querySelector(".sliders"),lg=document.querySelector(".legend");
+  if(sl)sl.hidden=false;
+  if(lg)lg.hidden=false;
+  if(isDraw){
+    if(!$('viewCustom').hidden)showView(false);
+  }else if(isCam){
+    if($('viewCustom').hidden)showView(true);
+    if(!$('showCones').checked){$('showCones').checked=true;}
+    renderCustom();
+    schedulePersist();
+  }
+}
+window.setPlannerStep=setPlannerStep;
+window.getPlacedCounts=function(){
+  var a=0,b=0;
+  st.cams.forEach(function(c){if(c.t==="out")b++;else a++;});
+  return {"in":a,out:b,total:a+b};
+};
+window.addEventListener("message",function(e){
+  if(e&&e.data&&e.data.type==="setPlannerStep")setPlannerStep(e.data.step);
+});
 buildExample();
 restore();
 onSlide();
 setHint();
 updButtons();
+try{
+  var m=/[?&]step=(draw|cameras)\b/.exec(window.location.search);
+  if(m)setPlannerStep(m[1]);
+}catch(_){}
 })();
 </script>
 </body>

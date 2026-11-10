@@ -31,4 +31,18 @@ $('swExample').click();
 ok('back to the example plan: sliders enabled again',()=>{assert(!$('fov').disabled&&!$('rng').disabled);});
 $('swCustom').click();
 ok('custom plan, no cameras: sliders disabled again',()=>{assert($('fov').disabled);});
+
+/* Step mode tests for v3 pagination */
+w.setPlannerStep('draw');
+ok('step mode draw: shows Example view first',()=>{
+  assert.strictEqual($('viewExample').hidden,false);
+  assert.strictEqual($('viewCustom').hidden,true);
+});
+w.setPlannerStep('cameras');
+ok('step mode cameras: switches to Your plan and checks coverage cones',()=>{
+  assert.strictEqual($('viewExample').hidden,true);
+  assert.strictEqual($('viewCustom').hidden,false);
+  assert.strictEqual($('showCones').checked,true);
+});
+w.setPlannerStep('all');
 console.log('errors:',errs);assert.strictEqual(errs.length,0);console.log(n+' checks passed');

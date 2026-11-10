@@ -12,10 +12,16 @@
 [hidden]{display:none!important}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);line-height:1.4;padding:16px max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));padding-top:max(16px,env(safe-area-inset-top))}
 main{max-width:800px;margin:0 auto}
-h1{font-size:1.35rem;margin-bottom:10px}h2{font-size:1rem;margin:0 0 8px}
-.steps{display:flex;gap:6px;margin-bottom:14px;font-size:.8rem;color:var(--mut)}
-.steps span{flex:1;padding:6px;border-radius:8px;border:1px solid var(--bd);text-align:center}
-.steps .on{background:var(--acbg);border-color:var(--ac);color:var(--ac);font-weight:600}
+h1{font-size:1.35rem;margin-bottom:6px}h2{font-size:1rem;margin:0 0 8px}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:14px;font-size:.82rem}
+.steps button{min-height:42px;padding:6px 8px;border-radius:10px;border:1px solid var(--bd2);background:var(--s1);color:var(--tx2);font:inherit;font-weight:500;text-align:center;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.steps button.on,.steps button[aria-current="step"]{background:var(--acbg);border-color:var(--ac);color:var(--ac);font-weight:700}
+.steps button.coming-nav{border-style:dashed;color:var(--ac)}
+.steps button.coming-nav.on{border-style:solid}
+@media(max-width:600px){.steps{grid-template-columns:1fr 1fr}}
+.step-pane{animation:fadeStep .2s ease-out}
+@keyframes fadeStep{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.step-pane{animation:none}.steps button{transition:none}}
 .card{background:var(--s1);border:1px solid var(--bd2);border-radius:12px;padding:14px;margin-bottom:12px}
 .l{display:block;font-size:.85rem;color:var(--tx2);margin:0 0 6px}
 .budget{display:grid;grid-template-columns:1fr 150px;gap:12px;align-items:center}
@@ -48,129 +54,82 @@ th{color:var(--mut);font-weight:500;font-size:.78rem}tr.tot td{font-weight:700;b
 ul.notes{margin:6px 0 0 18px;font-size:.82rem;color:var(--tx2)}ul.notes li{margin:3px 0}ul.notes a{color:var(--ac)}
 details summary{cursor:pointer;font-weight:600;font-size:.9rem;min-height:36px;display:flex;align-items:center}
 .pgrid{display:grid;grid-template-columns:1fr 110px;gap:6px 10px;align-items:center;font-size:.85rem;margin-top:8px}.pgrid input{min-height:38px;font-size:15px}
-.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-size:1rem;font-weight:600;cursor:pointer;text-decoration:none;margin-top:10px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;padding:8px 14px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-size:.96rem;font-weight:600;cursor:pointer;text-decoration:none;margin-top:10px}
 .btn.alt{background:transparent;color:var(--tx);border:1px solid var(--bd2)}
-.vis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.vis button,.vis a{display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:10px;border:1px solid var(--ac);font:inherit;font-weight:700;text-decoration:none;cursor:pointer;background:transparent;color:var(--ac)}
-.vis button[aria-pressed=true]{background:var(--ac);color:#fff}
+.btn.sneak{border-color:var(--ac);color:var(--ac);margin-top:10px}
+.pager{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:14px 0 6px}
+.pager .btn{margin-top:0;flex:1}
 iframe{width:100%;height:80vh;min-height:520px;border:1px solid var(--bd2);border-radius:12px;background:var(--bg)}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-details.sec{margin-bottom:14px}
-details.sec>summary{cursor:pointer;font-weight:700;font-size:1.05rem;min-height:48px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--bd2);border-radius:12px;background:var(--s1);margin-bottom:10px}
-details.sec>summary small{font-weight:400;font-size:.78rem;color:var(--mut)}
 footer{margin-top:24px;padding-top:14px;border-top:1px solid var(--bd2);font-size:.85rem;color:var(--tx2);text-align:center}
 footer a{color:var(--ac)}
 footer details{text-align:left;margin-top:10px}
 footer details summary{justify-content:center;font-weight:600;font-size:.85rem;min-height:40px}
 footer details p{font-size:.82rem;margin-top:6px}
-#hero{display:block;width:100%;max-width:420px;height:auto;margin:4px auto 10px;color:var(--tx)}
-#hero *{stroke:currentColor;fill:none;stroke-width:1.6;stroke-linejoin:round}#hero .f{fill:currentColor;stroke:none}#hero .b{fill:var(--s2)}#hero text{fill:var(--tx2);stroke:none;font-size:11px;font-family:inherit}
-#primer{margin-bottom:12px;font-size:.88rem;line-height:1.5}
-#primer h3{font-size:.95rem;margin:14px 0 6px}#primer h3:first-child{margin-top:0}
-#primer p,#primer li{color:var(--tx2)}#primer ul{margin:4px 0 0 18px}#primer li{margin:3px 0}#primer b{color:var(--tx)}
-#primer th,#primer td{text-align:left;vertical-align:top;padding:6px 6px 6px 0}
-#primerBtn{margin-top:0;margin-bottom:12px}
 .big{font-size:1.9rem;font-weight:700;line-height:1.2}.sub{font-size:.85rem;color:var(--tx2);margin-top:2px}
 .lead{font-size:.88rem;color:var(--tx2);margin-bottom:10px}
 details.adv{margin-top:12px;border-top:1px solid var(--bd);padding-top:4px}
 .gh{font-size:.88rem;font-weight:600;color:var(--tx2);margin:12px 0 6px}.gh:first-of-type{margin-top:4px}
 .pcheck{display:flex;align-items:center;gap:10px;min-height:44px;font-size:.88rem;margin-top:6px;cursor:pointer}.pcheck input{width:22px;height:22px;accent-color:var(--ac);flex:none}
+.sync-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.sync-bar .btn{width:auto;min-height:42px;margin-top:0;padding:6px 14px;font-size:.88rem}
+.coming-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:8px}
+.coming-item{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:12px;display:flex;flex-direction:column;justify-content:space-between}
+.coming-item h3{font-size:.95rem;margin-bottom:4px}
+.coming-item p{font-size:.84rem;color:var(--tx2)}
 </style>
 </head>
 <body>
 <main>
 <h1>Camera planner</h1>
-<svg id="hero" viewBox="0 0 360 100" role="img" aria-label="Illustration of a dome, a bullet and a turret security camera">
-  <g><rect class="b" x="30" y="14" width="60" height="7" rx="3"/><path class="f" d="M38 21h44a22 22 0 0 1-44 0z"/><text x="60" y="88" text-anchor="middle">Dome</text></g>
-  <g><rect class="b" x="132" y="10" width="7" height="56" rx="3"/><path d="M139 38h12"/><rect class="b" x="151" y="26" width="64" height="26" rx="12"/><circle class="f" cx="203" cy="39" r="8"/><text x="175" y="88" text-anchor="middle">Bullet</text></g>
-  <g><rect class="b" x="260" y="14" width="70" height="7" rx="3"/><rect class="b" x="268" y="21" width="54" height="13" rx="6"/><path class="f" d="M278 34h34a17 17 0 0 1-34 0z"/><text x="295" y="88" text-anchor="middle">Turret</text></g>
-</svg>
-<p style="color:var(--tx2);font-size:.95rem;margin-bottom:12px">Plan a home CCTV setup. See the coverage on a 2D floor plan or in 3D on your own wall. Set a budget and mix camera types to get an approximate cost.</p>
-<button type="button" class="btn alt" id="primerBtn" aria-expanded="false" aria-controls="primer">Know your camera</button>
-<div class="card" id="primer" hidden></div>
-<template id="primerTpl">
-<style>
-.ig{font-size:.88rem;line-height:1.45;color:var(--tx2)}
-.ig b{color:var(--tx)}
-.ig details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;font-weight:700;color:var(--tx)}
-.ig details>summary::-webkit-details-marker{display:none}
-.ig details>summary::after{content:"";flex:none;width:8px;height:8px;margin:0 4px 0 auto;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(45deg);transition:transform .15s}
-.ig details[open]>summary::after{transform:rotate(-135deg)}
-@media(prefers-reduced-motion:reduce){.ig details>summary::after{transition:none}}
-.ig-s{border-bottom:1px solid var(--bd)}
-.ig-s>summary{font-size:1rem}
-.ig-s>summary i{font-style:normal;display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#fff;font-size:.8rem}
-.ig-b{padding:2px 0 14px}
-.ig-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:start}
-.ig-c,.ig-lane,.ig-term{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:0 10px}
-.ig-c>summary,.ig-lane>summary,.ig-term>summary{font-size:.88rem}
-.ig-c svg{width:44px;height:26px;flex:none;color:var(--tx)}
-.ig-c svg *{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
-.ig-c svg .f{fill:currentColor;stroke:none}
-.ig-d{padding:0 0 10px}
-.ig-p{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--acbg);color:var(--ac);margin:6px 4px 0 0}
-.ig-lane{margin-bottom:8px}
-.ig-f{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 4px}
-.ig-n{padding:6px 9px;border-radius:8px;border:1px solid var(--bd2);background:var(--s1);color:var(--tx);font-size:.8rem;text-align:center}
-.ig-a{font-size:.68rem;color:var(--mut);text-align:center;line-height:1.1}
-.ig-t{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;align-items:start}
-.ig-go{display:flex;align-items:center;min-height:48px;margin-top:16px;padding:12px;border:1px solid var(--bd2);border-radius:10px;background:var(--s1);color:var(--ac);font-weight:700;text-decoration:none}
-.ig-tip{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--acbg);color:var(--tx)}
-</style>
-<div class="ig">
-  <details class="ig-s"><summary><i>1</i>Which camera goes where?</summary><div class="ig-b"><div class="ig-g">
-    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="4" width="42" height="5" rx="2"/><path class="f" d="M15 9h28a14 14 0 0 1-28 0z"/></svg>Dome</summary><div class="ig-d">Round and low-profile, fixed to a ceiling. Hard to tell where it is pointing.<br><span class="ig-p">Indoor</span><span class="ig-p">Living room, foyer</span></div></details>
-    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="4" y="2" width="4" height="30" rx="2"/><path d="M8 17h8"/><rect x="16" y="9" width="38" height="16" rx="8"/><circle class="f" cx="46" cy="17" r="5"/></svg>Bullet</summary><div class="ig-d">Long tube that sees far in a narrow strip. Easy to spot, which puts people off.<br><span class="ig-p">Outdoor</span><span class="ig-p">Balcony, outer wall</span></div></details>
-    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="3" width="42" height="4" rx="2"/><rect x="13" y="7" width="32" height="8" rx="4"/><path class="f" d="M21 15h16a8 8 0 0 1-16 0z"/></svg>Turret</summary><div class="ig-d">Small ball-shaped camera with a wide view, mounted on a wall or ceiling.<br><span class="ig-p">Indoor</span><span class="ig-p">Door, corridor</span></div></details>
-    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="9" y="4" width="40" height="22" rx="7"/><circle class="f" cx="29" cy="15" r="6"/><path d="M18 30h22"/></svg>Indoor camera</summary><div class="ig-d">Small cube that sits on a shelf or table, or hangs on a wall. Many models turn to follow movement.<br><span class="ig-p">Indoor</span><span class="ig-p">Rooms, nursery</span><span class="ig-p">Not priced here</span></div></details>
-    <details class="ig-c"><summary><svg viewBox="0 0 58 34" aria-hidden="true"><rect x="8" y="3" width="42" height="4" rx="2"/><path d="M29 7v5"/><circle cx="29" cy="20" r="9"/><circle class="f" cx="29" cy="20" r="4"/><path d="M12 22a17 8 0 0 0 4 4M46 22a17 8 0 0 1-4 4"/></svg>PTZ (Pan-Tilt-Zoom)</summary><div class="ig-d">A motor turns it left and right, tips it up and down, and zooms in. You steer it from a phone, or it follows movement by itself. One PTZ can watch a big area. PTZ can also be a feature of other cameras: many dome and indoor models have pan-tilt, and some have zoom, built in.<br><span class="ig-p">Big areas</span><span class="ig-p">Costs more</span><span class="ig-p">Not priced here</span></div></details>
-  </div></div></details>
+<p style="color:var(--tx2);font-size:.92rem;margin-bottom:12px">Plan a home CCTV setup in three steps: draw your house, check camera coverage and blind spots, then estimate the cost.</p>
 
-  <details class="ig-s"><summary><i>2</i>How does the picture reach the recorder?</summary><div class="ig-b">
-    <details class="ig-lane"><summary>DVR: the "one cable per camera" way</summary><div class="ig-d">
-      <div class="ig-f"><span class="ig-n">Camera</span><span class="ig-a">cable<br>→</span><span class="ig-n">DVR box<br>saves the video</span><span class="ig-a">→</span><span class="ig-n">TV or phone</span></div>
-      <span class="ig-p">Lower cost</span><span class="ig-p">Good picture (2 MP)</span><span class="ig-p">Up to 4 cameras here</span></div></details>
-    <details class="ig-lane"><summary>NVR: the "home internet" way</summary><div class="ig-d">
-      <div class="ig-f"><span class="ig-n">Camera</span><span class="ig-a">network cable<br>(also powers it)<br>→</span><span class="ig-n">Network box<br>(PoE switch)</span><span class="ig-a">→</span><span class="ig-n">NVR box<br>saves the video</span><span class="ig-a">→</span><span class="ig-n">TV or phone</span></div>
-      <span class="ig-p">Costs more</span><span class="ig-p">Sharper picture (4 MP)</span><span class="ig-p">Up to 7 cameras here</span></div></details>
-    <div class="ig-tip"><b>Quick rule:</b> tight budget, a few cameras → DVR. Sharper picture and room to add more later → NVR.</div>
-  </div></details>
+<nav class="steps" id="topNav" aria-label="Planner steps">
+  <button type="button" id="tab1" data-step="1" class="on" aria-current="step">1. Draw my house</button>
+  <button type="button" id="tab2" data-step="2">2. Camera &amp; blind spots</button>
+  <button type="button" id="tab3" data-step="3">3. Costs</button>
+  <button type="button" id="topComingBtn" data-step="4" class="coming-nav">What's coming</button>
+</nav>
 
-  <details class="ig-s"><summary><i>3</i>How does the camera get power and connect?</summary><div class="ig-b"><div class="ig-g">
-    <details class="ig-c"><summary>Wired cable</summary><div class="ig-d">A cable runs from each camera to the recorder.<br><span class="ig-p">Very steady</span><span class="ig-p">Cable must be laid</span></div></details>
-    <details class="ig-c"><summary>PoE cable</summary><div class="ig-d">One network cable carries the picture and the power.<br><span class="ig-p">Neat, one cable</span></div></details>
-    <details class="ig-c"><summary>WiFi camera</summary><div class="ig-d">Sends the picture through your WiFi, but still needs a power socket nearby.<br><span class="ig-p">Weak signal = patchy video</span></div></details>
-    <details class="ig-c"><summary>Battery camera</summary><div class="ig-d">No wires at all. You recharge it, and it often saves short clips instead of recording non-stop.<br><span class="ig-p">Easy to place</span></div></details>
+<!-- STEP 1 & STEP 2: Shared 2D Floor Plan Stage for Seamless Transition -->
+<section id="s2" class="step-pane">
+  <div class="card" id="page1Head">
+    <h2>Step 1: Draw your house</h2>
+    <p class="lead" style="margin-bottom:0">Explore the example floor plan first, then tap <b>Try out your floor plan</b> (or <b>Your plan</b>) to start drawing and move to Camera &amp; blind spots.</p>
   </div>
-  <p style="margin-top:8px">This planner has prices for wired and WiFi cameras. Battery cameras are not priced here; you can type your own price under "Edit price list" if you need to.</p></div></details>
 
-  <details class="ig-s"><summary><i>4</i>Words you will see in the form</summary><div class="ig-b"><div class="ig-t">
-    <details class="ig-term"><summary>MP (megapixels)</summary><div class="ig-d">How sharp the picture is. More MP shows faces and details more clearly.</div></details>
-    <details class="ig-term"><summary>IR / night vision</summary><div class="ig-d">Invisible lights let the camera see in the dark. The picture turns black and white.</div></details>
-    <details class="ig-term"><summary>Audio</summary><div class="ig-d">A built-in microphone, so the camera records sound too.</div></details>
-    <details class="ig-term"><summary>Channel</summary><div class="ig-d">One camera socket on the recorder. A 4-channel DVR takes 4 cameras.</div></details>
-    <details class="ig-term"><summary>HDD / SSD</summary><div class="ig-d">The memory that stores recordings. More space keeps more days of video.</div></details>
-    <details class="ig-term"><summary>PoE switch</summary><div class="ig-d">A box that hands out network cables and power to the cameras.</div></details>
-    <details class="ig-term"><summary>Cable run</summary><div class="ig-d">The length of cable from the recorder to the camera.</div></details>
-    <details class="ig-term"><summary>Junction box and conduit</summary><div class="ig-d">A small box that protects cable joints, and a pipe that protects the cable.</div></details>
-    <details class="ig-term"><summary>PTZ</summary><div class="ig-d">Pan-Tilt-Zoom: a motor that turns, tips and zooms the camera. Some dome and indoor cameras offer it as a feature.</div></details>
-    <details class="ig-term"><summary>Indoor / outdoor</summary><div class="ig-d">Outdoor cameras are built for rain and dust. In the 2D plan, bullets count as outdoor.</div></details>
-  </div></div></details>
-  <a class="ig-go" href="additional-info.html">Additional information →</a>
-</div>
-</template>
-
-<details class="sec" id="s2"><summary>Visualize</summary>
-  <div class="vis">
-    <button type="button" id="v2d" aria-pressed="true">2D plan</button>
-    <a href="google-ar/wall-cameras-ar.html" id="l3d">3D (AR) ↗</a>
+  <div class="card" id="page2Head" hidden>
+    <h2>Step 2: Camera &amp; blind spots</h2>
+    <p class="lead" style="margin-bottom:0">Draw your walls and room labels, place indoor and outdoor cameras, use <b>Suggest</b> to find corner positions, and adjust <b>Field of view</b> and <b>Range</b> to spot blind spots.</p>
   </div>
+
   <div class="card" id="sum" hidden></div>
-  <iframe id="frame" title="2D floor plan and coverage"></iframe>
-</details>
 
-<details class="sec" id="s1"><summary>Cost Estimation</summary>
-  <p class="lead">Three quick steps: set a budget, choose a system, add cameras. You can mix wired and WiFi cameras. Your total updates as you go.</p>
+  <iframe id="frame" src="flat_camera_coverage_floor_plan.html?step=draw" title="2D floor plan and coverage"></iframe>
+
+  <div class="pager" id="pager1">
+    <button type="button" class="btn" id="nextTo2">Next: Camera &amp; blind spots →</button>
+  </div>
+
+  <div class="pager" id="pager2" hidden>
+    <button type="button" class="btn alt" id="backTo1">← Back: Draw my house</button>
+    <button type="button" class="btn" id="nextTo3">Next: Costs →</button>
+  </div>
+</section>
+
+<!-- STEP 3: Costs (Separate from What's Coming) -->
+<section id="s1" class="step-pane" hidden>
+  <div class="card" id="planSyncCard">
+    <div class="sync-bar">
+      <div>
+        <h2 style="margin-bottom:2px">Step 3: Cost estimation</h2>
+        <p class="lead" id="planSyncTxt" style="margin-bottom:0">Set a budget, choose a recording system, and add cameras manually or auto-populate from your 2D floor plan.</p>
+      </div>
+      <button type="button" class="btn alt" id="autoPopBtn">Auto-populate from 2D plan</button>
+    </div>
+    <p class="msg" id="autoPopMsg" hidden></p>
+  </div>
+
   <div class="card">
     <h2>1. Your budget</h2>
     <label class="l" for="budgetNum">Camera budget (₹)</label>
@@ -222,8 +181,40 @@ details.adv{margin-top:12px;border-top:1px solid var(--bd);padding-top:4px}
   </div>
 
   <details class="card"><summary>Edit price list</summary><label class="pcheck"><input type="checkbox" id="showAllP"> Show prices for cameras I haven't added</label><div class="pgrid" id="pgrid"></div></details>
-  <button type="button" class="btn" id="toVis" hidden>Visualize</button>
-</details>
+
+  <div class="pager" id="pager3">
+    <button type="button" class="btn alt" id="backTo2">← Back: Camera &amp; blind spots</button>
+    <button type="button" class="btn alt" id="toVis" hidden>Review 2D plan</button>
+    <button type="button" class="btn" id="nextTo4">What's coming →</button>
+  </div>
+</section>
+
+<!-- STEP 4: Separate What's Coming Page -->
+<section id="whatsComing" class="step-pane" aria-labelledby="comingTitle" hidden>
+  <div class="card">
+    <h2 id="comingTitle">What's coming</h2>
+    <p class="lead" style="margin-bottom:4px">Separate tools currently being developed. Take a sneak peek at the working pages below:</p>
+    <div class="coming-grid">
+      <div class="coming-item">
+        <div>
+          <h3>Know your camera (Primer)</h3>
+          <p>A plain-language visual guide to Dome, Bullet, Turret, and PTZ cameras, DVR vs NVR setups, PoE/WiFi/battery power, and India's STQC security certification rules.</p>
+        </div>
+        <a class="btn alt sneak" id="sneakPrimer" href="primer.html">Sneak peek: Camera primer →</a>
+      </div>
+      <div class="coming-item">
+        <div>
+          <h3>3D (AR) Wall Visualizer</h3>
+          <p>Point your Android phone (Chrome with ARCore) at a real wall to mount virtual cameras and preview a translucent 3D coverage beam before drilling.</p>
+        </div>
+        <a class="btn alt sneak" id="l3d" href="google-ar/wall-cameras-ar.html">Sneak peek: 3D (AR) ↗</a>
+      </div>
+    </div>
+  </div>
+  <div class="pager" id="pager4">
+    <button type="button" class="btn alt" id="backTo3">← Back: Costs</button>
+  </div>
+</section>
 
 <footer>
   <div>Made with ❤️ by Sourabh · © 2026 · <a href="https://github.com/Sourabh06/home-security-planner" target="_blank" rel="noopener noreferrer" style="white-space:nowrap">Like this project? Check it out on GitHub</a> · <a href="https://sourabhkumarsingh-portfolio.lovable.app/" target="_blank" rel="noopener noreferrer">Portfolio</a></div>
@@ -239,6 +230,7 @@ details.adv{margin-top:12px;border-top:1px solid var(--bd);padding-top:4px}
 var $=function(id){return document.getElementById(id);};
 var inr=function(n){return '₹'+Math.round(n).toLocaleString('en-IN');};
 var KEY='cameraPlanner.v3';
+var PLAN_KEY='flatCameraPlan.v1';
 
 /* Prices exclude GST. Supplied by you, except those marked est. (web estimates, Oct 2026). All approximate. */
 var P={dvr_nv:2850,dvr_ir:1950,dvr_bul:1850,dvr_tur:1800,dvr_rec:7500,dvr_hdd:2800,dvr_conn:50,dvr_inst:500,wire_25:25,wire_40:40,wire_86:50,dvr_psu:1000,
@@ -261,6 +253,7 @@ var CAT={
  wl:[{id:'do',f:'dome',n:'3 MP dome WiFi IP',k:'wl_dome'},{id:'bu',f:'bullet',n:'2 MP IR bullet WiFi IP',k:'wl_bullet'},{id:'tu',f:'turret',n:'4 MP turret WiFi IP',k:'wl_turret'}]};
 var CAP={dvr:4,nvr:7,wl:16};
 var S={budget:50000,sys:'dvr',showAllP:false,wire:'wire_25',run:15,conduit:1,carts:{dvr:{},nvr:{},wl:{}}};
+var curStep=1;
 function num(v,d){v=parseFloat(v);return isFinite(v)&&v>=0?v:d;}
 
 try{var sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv){
@@ -269,6 +262,41 @@ try{var sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv){
   if(sv.P&&sv.P.nvr_ssd!==undefined&&sv.P.nvr_hdd===undefined)sv.P.nvr_hdd=sv.P.nvr_ssd;
   if(sv.P)for(var k in sv.P)if(k in P&&!(k.indexOf('wl_')===0&&!(+sv.P[k]>0)))P[k]=num(sv.P[k],P[k]);}}catch(e){}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify({budget:S.budget,sys:S.sys,showAllP:S.showAllP,wire:S.wire,run:S.run,conduit:S.conduit,carts:S.carts,P:P}));}catch(e){}}
+
+/* Read placed indoor/outdoor counts from the 2D floor plan (iframe or localStorage) */
+function getPlanCameraCounts(){
+  try{
+    var fw=$('frame')&&$('frame').contentWindow;
+    if(fw&&typeof fw.getPlacedCounts==='function')return fw.getPlacedCounts();
+  }catch(_){}
+  try{
+    var d=$('frame')&&$('frame').contentDocument,p=d&&d.getElementById('cPins');
+    if(p){
+      var a=0,b=0;
+      Array.prototype.forEach.call(p.querySelectorAll('circle'),function(c){if(c.getAttribute('fill')==='#1D9E75')a++;else b++;});
+      if(a+b>0)return {'in':a,out:b,total:a+b};
+    }
+  }catch(_){}
+  try{
+    var raw=JSON.parse(localStorage.getItem(PLAN_KEY)||'null');
+    if(raw&&Array.isArray(raw.cams)){
+      var ci=0,co=0;
+      raw.cams.forEach(function(c){if(c&&c.t==='out')co++;else if(c)ci++;});
+      return {'in':ci,out:co,total:ci+co};
+    }
+  }catch(_){}
+  return {'in':0,out:0,total:0};
+}
+
+function updateSyncBanner(){
+  var pc=getPlanCameraCounts(),el=$('planSyncTxt');
+  if(!el)return;
+  if(pc.total>0){
+    el.innerHTML='From Step 2 (2D plan): <b>'+pc['in']+' indoor</b> and <b>'+pc.out+' outdoor</b> camera'+(pc.total===1?'':'s')+' placed. Auto-populate your cart or adjust cameras manually below.';
+  }else{
+    el.textContent='Set a budget, choose a recording system, and add cameras manually — or place cameras on Step 2 to auto-populate from your 2D plan.';
+  }
+}
 
 /* cost of a cart (+ optionally one extra camera of item id) */
 function calc(k,extra){
@@ -370,18 +398,152 @@ function render(){
   $('notes').innerHTML=N.map(function(t){return '<li>'+t+'</li>';}).join('');
   $('toVis').hidden=!n;
   $('showAllP').checked=!!S.showAllP;priceRows();
-  if($('s2').open)summary();
+  updateSyncBanner();
+  if(curStep===2)summary();
   persist();
 }
 
-/* events */
+/* Pagination & Seamless Step Transitions (Steps 1, 2, 3, and 4 = What's Coming) */
+var poll=null,W={ind:0,out:0,tot:0};
+function summary(){
+  var t=[],ind=0,out=0;
+  [S.sys,'wl'].forEach(function(k){CAT[k].forEach(function(it){var q=S.carts[k][it.id]||0;if(!q)return;if(it.f==='bullet')out+=q;else ind+=q;t.push(q+' × '+(k==='wl'?'':'Wired ')+it.n);});});
+  W={ind:ind,out:out,tot:ind+out};
+  var cur={total:tot()},pc=getPlanCameraCounts();
+  if(!W.tot&&!pc.total){$('sum').hidden=true;return;}
+  $('sum').hidden=false;
+  var html='<h2>Your cameras</h2>';
+  if(W.tot){
+    html+='<p style="font-size:.88rem">'+t.join(' · ')+'</p><p style="font-size:.88rem;color:var(--tx2);margin-top:4px">Approx. total '+inr(cur.total)+' (excl. GST) of '+inr(S.budget)+' budget. Place <b>'+ind+' indoor</b> and <b>'+out+' outdoor</b> in the plan.</p>';
+  }
+  var bad=W.tot>0&&(pc['in']>W.ind||pc.out>W.out);
+  html+='<p id="placed" style="font-size:.88rem;margin-top:4px;color:'+(bad?'var(--bad)':'var(--tx2)')+'">Placed in plan: '+pc['in']+' indoor, '+pc.out+' outdoor'+(bad?' — more than you have in your cart.':'.')+'</p>';
+  $('sum').innerHTML=html;
+}
+function watch(){
+  clearInterval(poll);
+  poll=setInterval(function(){
+    if(curStep===2)summary();
+    else if(curStep===3)updateSyncBanner();
+  },700);
+}
+function syncFrameStep(){
+  var mode=curStep===1?'draw':'cameras';
+  try{
+    var fw=$('frame')&&$('frame').contentWindow;
+    if(fw&&typeof fw.setPlannerStep==='function'){fw.setPlannerStep(mode);return;}
+    if(fw&&fw.postMessage)fw.postMessage({type:'setPlannerStep',step:mode},'*');
+  }catch(_){}
+}
+$('frame').addEventListener('load',function(){syncFrameStep();});
+
+function goStep(step){
+  curStep=step;
+  [1,2,3].forEach(function(i){
+    var b=$('tab'+i);
+    if(!b)return;
+    var on=(i===step);
+    b.className=on?'on':'';
+    if(on)b.setAttribute('aria-current','step');
+    else b.removeAttribute('aria-current');
+  });
+  var onComing=(step===4);
+  $('topComingBtn').className='coming-nav'+(onComing?' on':'');
+  if(onComing)$('topComingBtn').setAttribute('aria-current','step');
+  else $('topComingBtn').removeAttribute('aria-current');
+
+  if(step===1||step===2){
+    $('s2').hidden=false;
+    $('s1').hidden=true;
+    $('whatsComing').hidden=true;
+    $('page1Head').hidden=(step!==1);
+    $('page2Head').hidden=(step!==2);
+    $('pager1').hidden=(step!==1);
+    $('pager2').hidden=(step!==2);
+    if(step===1)$('sum').hidden=true;
+    else summary();
+    syncFrameStep();
+    watch();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }else if(step===3){
+    $('s2').hidden=true;
+    $('s1').hidden=false;
+    $('whatsComing').hidden=true;
+    updateSyncBanner();
+    watch();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }else if(step===4){
+    $('s2').hidden=true;
+    $('s1').hidden=true;
+    $('whatsComing').hidden=false;
+    clearInterval(poll);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+/* Auto-navigate to Step 2 (Camera & blind spots) when user clicks "Your plan" or "Try out your floor plan" */
+window.onEnterCustomPlan=function(){
+  if(curStep!==2)goStep(2);
+};
+window.addEventListener('message',function(e){
+  if(e&&e.data&&e.data.type==='enterCustomPlan'){
+    if(curStep!==2)goStep(2);
+  }
+});
+
+/* Auto-populate cart on Page 3 from cameras placed on Page 2 */
+$('autoPopBtn').addEventListener('click',function(){
+  var pc=getPlanCameraCounts(),msgEl=$('autoPopMsg');
+  if(!pc.total){
+    msgEl.hidden=false;
+    msgEl.textContent='No cameras placed on your 2D floor plan yet. Go back to Step 2 to place indoor or outdoor cameras first, or add cameras manually below.';
+    return;
+  }
+  var sys=S.sys,cap=CAP[sys],inId=(sys==='dvr'?'nv':'do'),outId='bu';
+  S.carts={dvr:{},nvr:{},wl:{}};
+  var remIn=pc['in'],remOut=pc.out;
+  var wiredIn=Math.min(remIn,cap);
+  if(wiredIn>0)S.carts[sys][inId]=wiredIn;
+  remIn-=wiredIn;
+  var wiredOut=Math.min(remOut,cap-wiredIn);
+  if(wiredOut>0)S.carts[sys][outId]=wiredOut;
+  remOut-=wiredOut;
+  var wlCap=CAP.wl;
+  var wlIn=Math.min(remIn,wlCap);
+  if(wlIn>0)S.carts.wl.do=wlIn;
+  var wlOut=Math.min(remOut,wlCap-wlIn);
+  if(wlOut>0)S.carts.wl.bu=wlOut;
+  render();
+  msgEl.hidden=false;
+  msgEl.textContent='Populated cart from 2D plan: '+pc['in']+' indoor and '+pc.out+' outdoor camera'+(pc.total===1?'':'s')+'.';
+});
+
+/* Step navigation events */
+$('topNav').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.step)goStep(+b.dataset.step);
+});
+$('nextTo2').onclick=function(){goStep(2);};
+$('backTo1').onclick=function(){goStep(1);};
+$('nextTo3').onclick=function(){goStep(3);};
+$('backTo2').onclick=function(){goStep(2);};
+$('toVis').onclick=function(){goStep(2);};
+$('nextTo4').onclick=function(){goStep(4);};
+$('backTo3').onclick=function(){goStep(3);};
+
+/* Cost estimation events */
 $('budgetRange').addEventListener('input',function(){S.budget=+this.value;$('budgetNum').value=S.budget;render();});
 $('budgetNum').addEventListener('input',function(){S.budget=num(this.value,0);$('budgetRange').value=Math.min(200000,Math.max(5000,S.budget));render();});
 $('budgetNum').addEventListener('blur',function(){this.value=S.budget;});
 Array.prototype.forEach.call(document.querySelectorAll('.seg'),function(g){g.addEventListener('click',function(e){var b=e.target.closest('button');if(b){S[g.dataset.k]=b.dataset.v;render();}});});
-['add','addW'].forEach(function(id){$(id).addEventListener('click',function(e){var b=e.target.closest('button[data-add]');if(!b||b.disabled)return;var c=S.carts[b.dataset.cart];c[b.dataset.add]=(c[b.dataset.add]||0)+1;render();});});
+['add','addW'].forEach(function(id){$(id).addEventListener('click',function(e){
+  var b=e.target.closest('button[data-add]');if(!b||b.disabled)return;
+  if(curStep!==3)goStep(3);
+  var c=S.carts[b.dataset.cart];c[b.dataset.add]=(c[b.dataset.add]||0)+1;render();
+});});
 $('cart').addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b||b.disabled)return;
+  if(curStep!==3)goStep(3);
   var kk=b.dataset.cart,c=S.carts[kk],id=b.dataset.dec||b.dataset.inc||b.dataset.del;if(!c||!id)return;
   if(b.dataset.dec){c[id]=(c[id]||1)-1;if(c[id]<=0)delete c[id];}
   else if(b.dataset.inc){c[id]=(c[id]||0)+1;}
@@ -408,38 +570,7 @@ PL.forEach(function(p){var l=document.createElement('label');l.textContent=p[1];
   i.addEventListener('input',function(){P[p[0]]=num(this.value,0);opts();render();});PR[p[0]]={l:l,i:i};$('pgrid').appendChild(l);$('pgrid').appendChild(i);});
 $('showAllP').addEventListener('change',function(){S.showAllP=this.checked;render();});
 
-/* screen 2: 2D plan embedded in this page (no redirect) */
-var poll=null,W={ind:0,out:0,tot:0};
-function summary(){
-  var t=[],ind=0,out=0;
-  [S.sys,'wl'].forEach(function(k){CAT[k].forEach(function(it){var q=S.carts[k][it.id]||0;if(!q)return;if(it.f==='bullet')out+=q;else ind+=q;t.push(q+' × '+(k==='wl'?'':'Wired ')+it.n);});});
-  W={ind:ind,out:out,tot:ind+out};
-  var cur={total:tot()};
-  $('sum').hidden=!W.tot;
-  $('sum').innerHTML=W.tot?'<h2>Your cameras</h2><p style="font-size:.88rem">'+t.join(' · ')+'</p><p style="font-size:.88rem;color:var(--tx2);margin-top:4px">Approx. total '+inr(cur.total)+' (excl. GST) of '+inr(S.budget)+' budget. Place <b>'+ind+' indoor</b> and <b>'+out+' outdoor</b> in the plan.</p><p id="placed" style="font-size:.88rem;margin-top:4px"></p>':'';
-}
-function watch(){
-  clearInterval(poll);
-  poll=setInterval(function(){
-    try{
-      var d=$('frame').contentDocument,p=d&&d.getElementById('cPins'),el=$('placed');if(!p||!el)return;
-      var a=0,b=0;Array.prototype.forEach.call(p.querySelectorAll('circle'),function(c){if(c.getAttribute('fill')==='#1D9E75')a++;else b++;});
-      var bad=W.tot>0&&(a>W.ind||b>W.out);
-      el.style.color=bad?'var(--bad)':'var(--tx2)';
-      el.textContent='Placed in plan: '+a+' indoor, '+b+' outdoor'+(bad?' — more than you have in your cart.':'.');
-    }catch(e){clearInterval(poll);}
-  },1000);
-}
-$('s2').addEventListener('toggle',function(){
-  if(this.open){
-    if(!$('frame').getAttribute('src'))$('frame').setAttribute('src','flat_camera_coverage_floor_plan.html');
-    summary();watch();
-  }else clearInterval(poll);
-});
-$('toVis').onclick=function(){$('s1').open=false;$('s2').open=true;$('s2').scrollIntoView({behavior:'smooth'});};
-$('primerBtn').onclick=function(){var p=$('primer'),o=p.hidden;if(o&&!p.firstChild)p.appendChild($('primerTpl').content.cloneNode(true));p.hidden=!o;this.setAttribute('aria-expanded',o?'true':'false');this.textContent=o?'Hide camera guide':'Know your camera';};
-$('v2d').onclick=function(){$('frame').scrollIntoView({behavior:'smooth'});};
-opts();render();
+opts();render();watch();
 })();
 </script>
 </body>
