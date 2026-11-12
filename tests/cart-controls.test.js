@@ -135,4 +135,21 @@ ok('Sneak peek: Camera primer and 3D AR links exist and point to valid standalon
   const a=ar.querySelector('#start a.back');assert(a);assert.strictEqual(a.getAttribute('href'),'../index.html');
   assert(fs.existsSync(path.join(root,'google-ar',a.getAttribute('href'))));
 });
+
+ok('Costs page has sample affiliate links redirect and buy-links.html has back link',()=>{
+  const bl=$('buyLinksBtn');
+  assert(bl&&bl.getAttribute('href')==='buy-links.html');
+  assert(fs.existsSync(path.join(root,'buy-links.html')));
+  const bdoc=new JSDOM(fs.readFileSync(path.join(root,'buy-links.html'),'utf8')).window.document;
+  assert(bdoc.querySelector('a.back[href="index.html"]'));
+});
+ok('3D AR page has textured walls tip and cursor pointer on buttons',()=>{
+  const arRaw=fs.readFileSync(path.join(root,'google-ar','wall-cameras-ar.html'),'utf8');
+  assert(/textured walls/i.test(arRaw));
+  assert(/cursor:\s*pointer/.test(arRaw));
+});
+ok('Step 2 includes coming soon obstacle placement and coverage percentage note',()=>{
+  assert(/obstacle/i.test($('obstacleNote').textContent));
+  assert(/percentage covered/i.test($('obstacleNote').textContent));
+});
 console.log('errors:',errs);assert.strictEqual(errs.length,0);console.log(n+' checks passed');

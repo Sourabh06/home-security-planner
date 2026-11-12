@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Recommended hardware &amp; storage · Camera planner</title>
+<style>
+:root{--bg:#f9f9f7;--s1:#fcfcfb;--s2:#fff;--tx:#0b0b0b;--tx2:#52514e;--mut:#898781;--bd:rgba(11,11,11,.1);--bd2:rgba(11,11,11,.22);--ac:#2a78d6;--acbg:rgba(42,120,214,.14)}
+@media(prefers-color-scheme:dark){:root{--bg:#0b0b0b;--s1:#1a1a19;--s2:#242423;--tx:#f0efec;--tx2:#c3c2b7;--bd:rgba(255,255,255,.12);--bd2:rgba(255,255,255,.25);--ac:#6da7ec;--acbg:rgba(109,167,236,.2)}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);line-height:1.5;padding:16px max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));padding-top:max(16px,env(safe-area-inset-top))}
+main{max-width:800px;margin:0 auto}
+h1{font-size:1.35rem;margin:10px 0 4px}
+h2{font-size:1rem;margin:0 0 8px}
+a{color:var(--ac)}
+.back{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-decoration:none}
+.lead{color:var(--tx2);font-size:.92rem;margin-bottom:12px}
+.thanks{background:var(--acbg);border:1px solid var(--ac);border-radius:10px;padding:10px 12px;font-size:.86rem;color:var(--tx);margin-bottom:12px}
+.card{background:var(--s1);border:1px solid var(--bd2);border-radius:12px;padding:14px;margin-bottom:12px}
+.item-list{display:flex;flex-direction:column;gap:8px}
+.item-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:10px 12px}
+.item-info b{display:block;font-size:.92rem}
+.item-info small{display:block;color:var(--tx2);font-size:.8rem}
+.buy-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:6px 14px;border-radius:8px;border:1px solid var(--ac);background:var(--acbg);color:var(--ac);font-size:.86rem;font-weight:600;text-decoration:none;white-space:nowrap}
+.buy-btn:hover{background:var(--ac);color:#fff}
+.note{font-size:.82rem;color:var(--tx2);margin-top:8px}
+footer{margin-top:24px;padding-top:14px;border-top:1px solid var(--bd2);font-size:.85rem;color:var(--tx2);text-align:center}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="index.html">← Back to planner</a>
+<h1>Cameras, storage &amp; recorders</h1>
+<p class="lead">Hardware links tailored to the cameras and recording system in your cost estimate, plus storage essentials.</p>
+<p class="thanks"><b>Thank you for supporting this project:</b> We truly appreciate you using the links below — purchasing through them contributes a small commission that helps keep Camera Planner free, ad-free, and open source, at no extra cost to you.</p>
+
+<section class="card" aria-labelledby="camTitle">
+  <h2 id="camTitle">Selected cameras</h2>
+  <p class="lead" id="camSub" style="font-size:.84rem;margin-bottom:8px"></p>
+  <div class="item-list" id="camLinks"></div>
+</section>
+
+<section class="card" aria-labelledby="recTitle">
+  <h2 id="recTitle">Recorders &amp; storage (NVR / DVR, HDD, SD card)</h2>
+  <div class="item-list" id="recLinks"></div>
+  <p class="note">Check STQC certification before buying IP/WiFi cameras or recorders in India (<a href="additional-info.html#stqc">More on STQC</a>).</p>
+</section>
+
+<footer>
+  <a class="back" href="index.html">← Back to planner</a>
+  <div style="margin-top:8px">Made with ❤️ by Sourabh · © 2026 · <a href="https://github.com/Sourabh06/home-security-planner" target="_blank" rel="noopener noreferrer">GitHub</a> · <a href="https://sourabhkumarsingh-portfolio.lovable.app/" target="_blank" rel="noopener noreferrer">Portfolio</a></div>
+</footer>
+</main>
+
+<script>
+(function(){
+var KEY='cameraPlanner.v3';
+var CATALOG={
+  dvr:{
+    nv:{name:'DVR · Night vision + audio 2 MP dome',url:'https://example.com/sample-affiliate/dvr-2mp-nv-dome'},
+    ir:{name:'DVR · IR + audio 2 MP dome',url:'https://example.com/sample-affiliate/dvr-2mp-ir-dome'},
+    bu:{name:'DVR · 2 MP audio HD bullet',url:'https://example.com/sample-affiliate/dvr-2mp-bullet'},
+    tu:{name:'DVR · 2 MP audio HD turret',url:'https://example.com/sample-affiliate/dvr-2mp-turret'}
+  },
+  nvr:{
+    do:{name:'NVR · 4 MP dome IP camera',url:'https://example.com/sample-affiliate/nvr-4mp-dome'},
+    bu:{name:'NVR · 4 MP bullet IP camera',url:'https://example.com/sample-affiliate/nvr-4mp-bullet'}
+  },
+  wl:{
+    do:{name:'WiFi · 3 MP dome IP camera',url:'https://example.com/sample-affiliate/wifi-3mp-dome'},
+    bu:{name:'WiFi · 2 MP IR bullet IP camera',url:'https://example.com/sample-affiliate/wifi-2mp-bullet'},
+    tu:{name:'WiFi · 4 MP turret IP camera',url:'https://example.com/sample-affiliate/wifi-4mp-turret'}
+  }
+};
+
+function row(title,sub,url,label){
+  var d=document.createElement('div');
+  d.className='item-row';
+  d.innerHTML='<div class="item-info"><b>'+title+'</b><small>'+sub+'</small></div>'+
+    '<a class="buy-btn" href="'+url+'" target="_blank" rel="noopener noreferrer">'+(label||'View product ↗')+'</a>';
+  return d;
+}
+
+var sv=null;
+try{sv=JSON.parse(localStorage.getItem(KEY)||'null');}catch(_){}
+var sys=(sv&&sv.sys==='nvr')?'nvr':'dvr';
+var carts=(sv&&sv.carts)||{dvr:{},nvr:{},wl:{}};
+
+var camBox=document.getElementById('camLinks');
+var selected=[];
+[sys,'wl'].forEach(function(k){
+  var c=carts[k]||{};
+  Object.keys(c).forEach(function(id){
+    var q=+c[id]||0;
+    if(q>0&&CATALOG[k]&&CATALOG[k][id]){
+      selected.push({qty:q,name:CATALOG[k][id].name,url:CATALOG[k][id].url});
+    }
+  });
+});
+
+if(selected.length){
+  document.getElementById('camSub').textContent='Matching links for the cameras in your current estimate:';
+  selected.forEach(function(it){
+    camBox.appendChild(row(it.qty+' × '+it.name,'Selected in your cart',it.url));
+  });
+}else{
+  document.getElementById('camSub').textContent='No cameras in your cart yet — showing options across all supported camera types:';
+  ['dvr','nvr','wl'].forEach(function(k){
+    Object.keys(CATALOG[k]).forEach(function(id){
+      camBox.appendChild(row(CATALOG[k][id].name,'Supported camera option',CATALOG[k][id].url));
+    });
+  });
+}
+
+var recBox=document.getElementById('recLinks');
+recBox.appendChild(row('microSD Card (128 GB / 256 GB High-Endurance)','For standalone WiFi & SD-card cameras','https://example.com/sample-affiliate/microsd-surveillance'));
+recBox.appendChild(row('Surveillance HDD (500 GB / 2 TB WD Purple / SkyHawk)',sys==='dvr'?'Matches your DVR setup (500 GB)':'Matches your NVR setup (2 TB)','https://example.com/sample-affiliate/surveillance-hdd'));
+recBox.appendChild(row('4-Channel HD DVR Recorder',sys==='dvr'?'Selected system in your estimate':'Alternative analog HD recorder','https://example.com/sample-affiliate/4ch-dvr'));
+recBox.appendChild(row('8-Channel IP NVR Recorder (with PoE switch)',sys==='nvr'?'Selected system in your estimate':'Alternative IP network recorder','https://example.com/sample-affiliate/8ch-nvr'));
+})();
+</script>
+</body>
+</html>
